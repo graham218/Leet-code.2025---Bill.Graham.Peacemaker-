@@ -47,7 +47,7 @@ class KadaneAlgorithm {
     int rightMax = maxSubarrayDivideAndConquer(nums, mid + 1, right);
     int crossMax = maxCrossingSum(nums, left, mid, right);
 
-    return max(leftMax, rightMax, crossMax);
+    return max(leftMax, max(rightMax, crossMax));
   }
 
   int maxCrossingSum(List<int> nums, int left, int mid, int right) {
