@@ -99,6 +99,7 @@ List<int> nextGreaterElementTwoPass(List<int> nums) {
   return result;
 }
 
+// main Function
 void main() {
   List<int> nums = [4, 5, 2, 10, 8];
   print("Stack Approach: ${nextGreaterElementStack(nums)}");
