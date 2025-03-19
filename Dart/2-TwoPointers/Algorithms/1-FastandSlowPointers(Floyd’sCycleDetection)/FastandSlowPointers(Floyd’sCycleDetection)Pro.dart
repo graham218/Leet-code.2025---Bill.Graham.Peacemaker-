@@ -38,42 +38,39 @@ class LinkedList {
 }
 
 // Approach 1: Floyd’s Cycle Detection Algorithm (Fast and Slow Pointers)
-// Used in real-world scenarios like detecting loops in linked lists or network packets.
 bool detectCycleFloyd(ListNode? head) {
   ListNode? slow = head, fast = head;
   while (fast != null && fast.next != null) {
     slow = slow?.next;
     fast = fast.next?.next;
-    if (slow == fast) return true; // Cycle detected
+    if (slow == fast) return true;
   }
   return false;
 }
 
 // Approach 2: Hash Set-based Cycle Detection
-// Used for detecting infinite redirects in web requests.
 bool detectCycleWithHashSet(ListNode? head) {
   HashSet<ListNode> visited = HashSet();
   while (head != null) {
-    if (visited.contains(head)) return true; // Cycle detected
+    if (visited.contains(head)) return true;
     visited.add(head);
     head = head.next;
   }
   return false;
 }
 
-// Approach 3: Marking Nodes by Modifying Structure
-// Used for detecting duplicate processing in workflows.
-bool detectCycleByMarking(ListNode? head) {
+// Approach 3: Cycle detection with visited set.
+bool detectCycleWithVisitedSet(ListNode? head) {
+  HashSet<ListNode> visited = HashSet();
   while (head != null) {
-    if (head.value == -999999) return true; // Cycle detected
-    head.value = -999999; // Mark the node as visited
+    if (visited.contains(head)) return true;
+    visited.add(head);
     head = head.next;
   }
   return false;
 }
 
 // Approach 4: Cycle Detection with a Counter (Cycle Length Calculation)
-// Used for finding repeating transaction chains in financial fraud detection.
 bool detectCycleWithCounter(ListNode? head) {
   ListNode? slow = head, fast = head;
   while (fast != null && fast.next != null) {
@@ -94,10 +91,9 @@ bool detectCycleWithCounter(ListNode? head) {
 }
 
 // Approach 5: Recursive Cycle Detection with Set
-// Used in scenarios like recursive DNS query resolution to detect loops.
 bool detectCycleRecursive(ListNode? head, {Set<ListNode> visited = const {}}) {
   if (head == null) return false;
-  if (visited.contains(head)) return true; // Cycle detected
+  if (visited.contains(head)) return true;
   return detectCycleRecursive(head.next, visited: {...visited, head});
 }
 
@@ -108,11 +104,11 @@ void main() {
   list.append(2);
   list.append(3);
   list.append(4);
-  list.createCycle(1); // Creating a cycle
+  list.createCycle(1);
 
-  print("Floyd's Cycle Detection: \${detectCycleFloyd(list.head)}");
-  print("Hash Set Cycle Detection: \${detectCycleWithHashSet(list.head)}");
-  print("Marking Nodes Cycle Detection: \${detectCycleByMarking(list.head)}");
-  print("Cycle Length Detection: \${detectCycleWithCounter(list.head)}");
-  print("Recursive Cycle Detection: \${detectCycleRecursive(list.head)}");
+  print("Floyd's Cycle Detection: ${detectCycleFloyd(list.head)}");
+  print("Hash Set Cycle Detection: ${detectCycleWithHashSet(list.head)}");
+  print("Visited Set Cycle Detection: ${detectCycleWithVisitedSet(list.head)}");
+  print("Cycle Length Detection: ${detectCycleWithCounter(list.head)}");
+  print("Recursive Cycle Detection: ${detectCycleRecursive(list.head)}");
 }
