@@ -94,6 +94,7 @@ List<int> intrusionDetection(List<int> traffic) {
   return result;
 }
 
+// main function
 void main() {
   List<int> stockPrices = [100, 80, 60, 70, 60, 75, 85];
   print("Stock Price Prediction: ${predictStockPrice(stockPrices)}");
