@@ -26,11 +26,12 @@ bool hasCycleSet(ListNode? head) {
   return false;
 }
 
-// Approach 3: Modifying Node Structure (Marking nodes)
+// Approach 3: Hash Set (Detecting visited nodes) alternative for avoiding node value modification
 bool hasCycleMarking(ListNode? head) {
+  Set<ListNode> visited = {};
   while (head != null) {
-    if (head.value == -999999) return true;
-    head.value = -999999; // Mark the node
+    if (visited.contains(head)) return true;
+    visited.add(head);
     head = head.next;
   }
   return false;
@@ -49,7 +50,7 @@ bool hasCycleLength(ListNode? head) {
         cycleLength++;
         temp = temp?.next;
       }
-      return cycleLength > 0;
+      return true; // Directly return true
     }
   }
   return false;
@@ -74,9 +75,9 @@ void main() {
   node3.next = node4;
   node4.next = node2; // Creating a cycle
 
-  print("Floyd's Cycle Detection: \${hasCycleFloyd(node1)}");
-  print("Hash Set Detection: \${hasCycleSet(node1)}");
-  print("Node Marking Detection: \${hasCycleMarking(node1)}");
-  print("Length Calculation Detection: \${hasCycleLength(node1)}");
-  print("Recursive Detection: \${hasCycleRecursive(node1)}");
+  print("Floyd's Cycle Detection: ${hasCycleFloyd(node1)}");
+  print("Hash Set Detection: ${hasCycleSet(node1)}");
+  print("Node Marking Detection: ${hasCycleMarking(node1)}");
+  print("Length Calculation Detection: ${hasCycleLength(node1)}");
+  print("Recursive Detection: ${hasCycleRecursive(node1)}");
 }
