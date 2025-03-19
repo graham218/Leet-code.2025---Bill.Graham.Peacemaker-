@@ -16,30 +16,36 @@ List<int> twoSumBruteForce(List<int> nums, int target) {
       }
     }
   }
-  return [];
+  return []; // Return empty list if no solution is found
 }
 
-// Approach 2: Using a HashMap
+// Approach 2: Using a HashMap (Optimized)
 List<int> twoSumHashMap(List<int> nums, int target) {
-  Map<int, int> map = {};
+  Map<int, int> numMap = {}; // More descriptive variable name
   for (int i = 0; i < nums.length; i++) {
     int complement = target - nums[i];
-    if (map.containsKey(complement)) {
-      return [map[complement]!, i];
+    if (numMap.containsKey(complement)) {
+      return [numMap[complement]!, i];
     }
-    map[nums[i]] = i;
+    numMap[nums[i]] = i;
   }
-  return [];
+  return []; // Return empty list if no solution is found
 }
 
-// Approach 3: Using Sorting and Two Pointers
+// Approach 3: Using Sorting and Two Pointers (Requires Original Indices)
 List<int> twoSumTwoPointers(List<int> nums, int target) {
+  // Create a list of tuples containing the value and its original index
   List<MapEntry<int, int>> indexedNums = nums.asMap().entries.toList();
+
+  // Sort the indexedNums based on the values
   indexedNums.sort((a, b) => a.value.compareTo(b.value));
 
-  int left = 0, right = nums.length - 1;
+  int left = 0;
+  int right = nums.length - 1;
+
   while (left < right) {
     int sum = indexedNums[left].value + indexedNums[right].value;
+
     if (sum == target) {
       return [indexedNums[left].key, indexedNums[right].key];
     } else if (sum < target) {
@@ -48,5 +54,6 @@ List<int> twoSumTwoPointers(List<int> nums, int target) {
       right--;
     }
   }
-  return [];
+
+  return []; // Return empty list if no solution is found
 }
