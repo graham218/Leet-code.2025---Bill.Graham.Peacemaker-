@@ -1,104 +1,104 @@
 class SortingAlgorithms {
-  /// Approach 1: Merge Sort (Divide and Conquer)
+  /// Merge Sort (Divide and Conquer)
   List<int> mergeSort(List<int> array) {
     if (array.length <= 1) return array;
-    int mid = array.length ~/ 2;
-    List<int> left = mergeSort(array.sublist(0, mid));
-    List<int> right = mergeSort(array.sublist(mid));
+    final mid = array.length ~/ 2;
+    final left = mergeSort(array.sublist(0, mid));
+    final right = mergeSort(array.sublist(mid));
     return _merge(left, right);
   }
 
   List<int> _merge(List<int> left, List<int> right) {
-    List<int> sorted = [];
-    int i = 0, j = 0;
+    final merged = <int>[];
+    var i = 0, j = 0;
     while (i < left.length && j < right.length) {
-      if (left[i] <= right[j]) {
-        sorted.add(left[i]);
-        i++;
-      } else {
-        sorted.add(right[j]);
-        j++;
-      }
+      merged.add(left[i] <= right[j] ? left[i++] : right[j++]);
     }
-    sorted.addAll(left.sublist(i));
-    sorted.addAll(right.sublist(j));
-    return sorted;
+    merged.addAll(left.sublist(i));
+    merged.addAll(right.sublist(j));
+    return merged;
   }
 
-  /// Approach 2: Quick Sort (Divide and Conquer)
+  /// Quick Sort (Divide and Conquer)
   List<int> quickSort(List<int> array) {
     if (array.length <= 1) return array;
-    int pivot = array[array.length ~/ 2];
-    List<int> left = array.where((x) => x < pivot).toList();
-    List<int> middle = array.where((x) => x == pivot).toList();
-    List<int> right = array.where((x) => x > pivot).toList();
+    final pivot = array[array.length ~/ 2];
+    final left = array.where((x) => x < pivot).toList();
+    final middle = array.where((x) => x == pivot).toList();
+    final right = array.where((x) => x > pivot).toList();
     return [...quickSort(left), ...middle, ...quickSort(right)];
   }
 
-  /// Approach 3: Bubble Sort (Simple but Inefficient)
+  /// Bubble Sort (Simple but Inefficient)
   List<int> bubbleSort(List<int> array) {
-    for (int i = 0; i < array.length - 1; i++) {
-      for (int j = 0; j < array.length - i - 1; j++) {
-        if (array[j] > array[j + 1]) {
-          int temp = array[j];
-          array[j] = array[j + 1];
-          array[j + 1] = temp;
+    final arr = List<int>.from(array); // Create a copy
+    final n = arr.length;
+    for (var i = 0; i < n - 1; i++) {
+      for (var j = 0; j < n - i - 1; j++) {
+        if (arr[j] > arr[j + 1]) {
+          final temp = arr[j];
+          arr[j] = arr[j + 1];
+          arr[j + 1] = temp;
         }
       }
     }
-    return array;
+    return arr;
   }
 
-  /// Approach 4: Insertion Sort (Efficient for Small Data)
+  /// Insertion Sort (Efficient for Small Data)
   List<int> insertionSort(List<int> array) {
-    for (int i = 1; i < array.length; i++) {
-      int key = array[i];
-      int j = i - 1;
-      while (j >= 0 && array[j] > key) {
-        array[j + 1] = array[j];
+    final arr = List<int>.from(array); // Create a copy
+    final n = arr.length;
+    for (var i = 1; i < n; i++) {
+      final key = arr[i];
+      var j = i - 1;
+      while (j >= 0 && arr[j] > key) {
+        arr[j + 1] = arr[j];
         j--;
       }
-      array[j + 1] = key;
+      arr[j + 1] = key;
     }
-    return array;
+    return arr;
   }
 
-  /// Approach 5: Heap Sort (Efficient for Large Datasets)
+  /// Heap Sort (Efficient for Large Datasets)
   List<int> heapSort(List<int> array) {
+    final arr = List<int>.from(array); // Create a copy
+    final n = arr.length;
+
     void heapify(List<int> arr, int n, int i) {
-      int largest = i;
-      int left = 2 * i + 1;
-      int right = 2 * i + 2;
+      var largest = i;
+      final left = 2 * i + 1;
+      final right = 2 * i + 2;
       if (left < n && arr[left] > arr[largest]) largest = left;
       if (right < n && arr[right] > arr[largest]) largest = right;
       if (largest != i) {
-        int temp = arr[i];
+        final temp = arr[i];
         arr[i] = arr[largest];
         arr[largest] = temp;
         heapify(arr, n, largest);
       }
     }
 
-    int n = array.length;
-    for (int i = n ~/ 2 - 1; i >= 0; i--) {
-      heapify(array, n, i);
+    for (var i = n ~/ 2 - 1; i >= 0; i--) {
+      heapify(arr, n, i);
     }
-    for (int i = n - 1; i > 0; i--) {
-      int temp = array[0];
-      array[0] = array[i];
-      array[i] = temp;
-      heapify(array, i, 0);
+    for (var i = n - 1; i > 0; i--) {
+      final temp = arr[0];
+      arr[0] = arr[i];
+      arr[i] = temp;
+      heapify(arr, i, 0);
     }
-    return array;
+    return arr;
   }
 }
 
 void main() {
-  SortingAlgorithms sorting = SortingAlgorithms();
-  List<int> data = [34, 7, 23, 32, 5, 62];
-  print("Merge Sort: ${sorting.mergeSort(List.from(data))}");
-  print("Quick Sort: ${sorting.quickSort(List.from(data))}");
-  print("Bubble Sort: ${sorting.bubbleSort(List.from(data))}");
-  print("Insertion Sort: ${sorting.insertionSort(List.from(data))}");
-  print("Heap Sort: ${sorting.heapSort(List.from(data))}");
+  final sorting = SortingAlgorithms();
+  final data = [34, 7, 23, 32, 5, 62];
+  print("Merge Sort: ${sorting.mergeSort(data)}");
+  print("Quick Sort: ${sorting.quickSort(data)}");
+  print("Bubble Sort: ${sorting.bubbleSort(data)}");
+  print("Insertion Sort: ${sorting.insertionSort(data)}");
+  print("Heap Sort: ${sorting.heapSort(data)}");
 }
