@@ -34,27 +34,46 @@ int maxAreaBruteForce(List<int> heights) {
   return maxArea;
 }
 
-// Approach 3: Divide and Conquer (Incorrect implementation)
+// Approach 3: Divide and Conquer (Corrected Implementation)
 int maxAreaDivideAndConquer(List<int> heights) {
-  if (heights.length < 2) return 0;
+  return _divideAndConquer(heights, 0, heights.length - 1);
+}
 
-  int mid = heights.length ~/ 2;
-  List<int> leftHeights = heights.sublist(0, mid);
-  List<int> rightHeights = heights.sublist(mid);
+int _divideAndConquer(List<int> heights, int left, int right) {
+  if (left >= right) return 0;
 
-  int leftMax = maxAreaDivideAndConquer(leftHeights);
-  int rightMax = maxAreaDivideAndConquer(rightHeights);
+  int mid = (left + right) ~/ 2;
 
-  // Calculate max area across the divide
-  int crossMax = 0;
-  for (int i = 0; i < leftHeights.length; i++) {
-    for (int j = 0; j < rightHeights.length; j++) {
-      int h = leftHeights[leftHeights.length - 1 - i] < rightHeights[j]
-          ? leftHeights[leftHeights.length - 1 - i]
-          : rightHeights[j];
-      crossMax = crossMax > h * (leftHeights.length + j - (leftHeights.length - 1 - i) -1) ? crossMax : h * (leftHeights.length + j - (leftHeights.length - 1 - i)-1);
+  // Recursively find the maximum area in the left and right subarrays
+  int leftMax = _divideAndConquer(heights, left, mid);
+  int rightMax = _divideAndConquer(heights, mid + 1, right);
+
+  // Find the maximum area across the divide
+  int crossMax = _findCrossMax(heights, left, mid, right);
+
+  // Return the maximum of the three areas
+  return [leftMax, rightMax, crossMax].reduce((a, b) => a > b ? a : b);
+}
+
+int _findCrossMax(List<int> heights, int left, int mid, int right) {
+  int i = mid, j = mid + 1;
+  int maxArea = 0;
+  int minHeight = heights[i] < heights[j] ? heights[i] : heights[j];
+  maxArea = minHeight * (j - i);
+
+  // Expand outwards from the middle to find the maximum cross area
+  while (i >= left || j <= right) {
+    if (i > left && (j == right || heights[i - 1] > heights[j + 1])) {
+      i--;
+      minHeight = minHeight < heights[i] ? minHeight : heights[i];
+    } else if (j < right && (i == left || heights[j + 1] > heights[i - 1])) {
+      j++;
+      minHeight = minHeight < heights[j] ? minHeight : heights[j];
+    } else {
+      break;
     }
+    maxArea = maxArea > minHeight * (j - i) ? maxArea : minHeight * (j - i);
   }
-  return maxAreaTwoPointers(heights);
-  //return [leftMax, rightMax, crossMax].reduce((curr, next) => curr > next ? curr : next);
+
+  return maxArea;
 }
