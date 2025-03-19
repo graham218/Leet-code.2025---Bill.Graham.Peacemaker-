@@ -93,6 +93,7 @@ List<int> dailyTemperatures(List<int> temperatures) {
   return result;
 }
 
+// main function
 void main() {
   List<int> nums = [2, 1, 2, 4, 3];
   print("Next Greater Element: ${nextGreaterElement(nums)}");
