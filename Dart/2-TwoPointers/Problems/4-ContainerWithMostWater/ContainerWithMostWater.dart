@@ -12,9 +12,9 @@ void main() {
 int maxAreaTwoPointers(List<int> heights) {
   int left = 0, right = heights.length - 1, maxArea = 0;
   while (left < right) {
-    int height = (heights[left] < heights[right]) ? heights[left] : heights[right];
+    int height = heights[left] < heights[right] ? heights[left] : heights[right];
     int width = right - left;
-    maxArea = (height * width > maxArea) ? height * width : maxArea;
+    maxArea = height * width > maxArea ? height * width : maxArea;
     if (heights[left] < heights[right]) {
       left++;
     } else {
