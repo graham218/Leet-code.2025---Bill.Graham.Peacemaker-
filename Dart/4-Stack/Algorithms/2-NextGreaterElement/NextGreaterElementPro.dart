@@ -2,6 +2,8 @@
 ///
 /// This implementation provides multiple approaches, each with different
 /// time and space complexities, suitable for various use cases.
+///
+/// main Function
 void main() {
   List<int> nums = [4, 5, 2, 10, 8];
   print('Original List: $nums');
