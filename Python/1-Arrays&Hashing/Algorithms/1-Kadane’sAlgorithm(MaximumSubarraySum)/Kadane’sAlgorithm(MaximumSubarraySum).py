@@ -9,6 +9,7 @@ Approaches:
 4. Sliding Window for Positive Subarrays
 5. Monotonic Queue Optimization
 """
+from collections import deque
 
 def max_subarray_kadane(nums):
     """
@@ -92,7 +93,6 @@ def max_subarray_monotonic_queue(nums):
     Time Complexity: O(n)
     Space Complexity: O(n)
     """
-    from collections import deque
     prefix_sum = 0
     min_prefix = deque([0])
     max_sum = float('-inf')
