@@ -15,7 +15,9 @@ from typing import List
 
 # Approach 1: Direct HashMap Implementation (Using Python Dictionary)
 def direct_hashmap_operations():
+    # Create a dictionary (built-in HashMap in Python)
     hashmap = {}
+    # Insert key-value pairs
     hashmap["apple"] = 10
     hashmap["banana"] = 20
     hashmap["cherry"] = 30
@@ -34,24 +36,30 @@ class HashMapChaining:
         self.table = [None] * self.size
 
     def hash_function(self, key):
+        # Simple hash function using modulo
         return hash(key) % self.size
 
     def insert(self, key, value):
         index = self.hash_function(key)
         if not self.table[index]:
+            # If the bucket is empty, create a new node
             self.table[index] = Node(key, value)
         else:
+            # If there's a collision, traverse the linked list
             curr = self.table[index]
             while curr.next:
                 if curr.key == key:
+                    # Update value if key already exists
                     curr.value = value
                     return
                 curr = curr.next
+            # Add new node at the end of the list
             curr.next = Node(key, value)
 
     def get(self, key):
         index = self.hash_function(key)
         curr = self.table[index]
+        # Traverse the linked list to find the key
         while curr:
             if curr.key == key:
                 return curr.value
@@ -72,16 +80,19 @@ class HashMapOpenAddressing:
         self.table = [None] * self.size
 
     def hash_function(self, key):
+        # Simple hash function using modulo
         return hash(key) % self.size
 
     def insert(self, key, value):
         index = self.hash_function(key)
+        # Find the next available slot using linear probing
         while self.table[index] is not None:
             index = (index + 1) % self.size
         self.table[index] = (key, value)
 
     def get(self, key):
         index = self.hash_function(key)
+        # Search for the key using linear probing
         while self.table[index]:
             if self.table[index][0] == key:
                 return self.table[index][1]
@@ -102,17 +113,20 @@ class BloomFilter:
         self.bit_array = [0] * self.size
 
     def _hash(self, item):
+        # Use two hash functions for better distribution
         hash1 = int(hashlib.md5(item.encode()).hexdigest(), 16) % self.size
         hash2 = int(hashlib.sha256(item.encode()).hexdigest(), 16) % self.size
         return hash1, hash2
 
     def add(self, item):
         hash1, hash2 = self._hash(item)
+        # Set bits at calculated positions
         self.bit_array[hash1] = 1
         self.bit_array[hash2] = 1
 
     def check(self, item):
         hash1, hash2 = self._hash(item)
+        # Check if both bits are set
         return self.bit_array[hash1] == 1 and self.bit_array[hash2] == 1
 
 def bloom_filter_operations():
@@ -134,6 +148,7 @@ class TrieSet:
     def insert(self, word):
         node = self.root
         for char in word:
+            # Create new nodes for characters not present
             if char not in node.children:
                 node.children[char] = TrieNode()
             node = node.children[char]
