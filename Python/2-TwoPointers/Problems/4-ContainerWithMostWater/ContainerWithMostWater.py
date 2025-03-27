@@ -145,6 +145,7 @@ def max_area_dynamic_programming(heights):
         max_area = max(max_area, area)  # Calculate the area and update the maximum area
     return max_area  # Return the maximum area
 
+
 # Test Cases
 heights = [1, 8, 6, 2, 5, 4, 8, 3, 7]
 print("Two Pointers:", max_area_two_pointers(heights))
