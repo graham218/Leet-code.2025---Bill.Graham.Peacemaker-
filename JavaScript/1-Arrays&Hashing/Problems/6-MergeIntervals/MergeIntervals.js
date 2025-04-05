@@ -1,199 +1,240 @@
 /*
 Problem:
-Given an integer array nums, find the contiguous subarray (containing at least one number)
-which has the largest sum and return its sum.
+Given an array of intervals where intervals[i] = [starti, endi], merge all overlapping intervals
+and return an array of the non-overlapping intervals that cover all the intervals in the input.
 
 Example 1:
-Input: [−2,1,−3,4,−1,2,1,−5,4]
-Output: 6
-Explanation: [4,−1,2,1] has the largest sum = 6.
+Input: intervals = [[1,3],[2,6],[8,10],[15,18]]
+Output: [[1,6],[8,10],[15,18]]
+Explanation: Intervals [1,3] and [2,6] overlap since 2 <= 3, so they are merged to [1,6].
 
 Example 2:
-Input: [1]
-Output: 1
-
-Example 3:
-Input: [5,4,-1,7,8]
-Output: 23
+Input: intervals = [[1,4],[4,5]]
+Output: [[1,5]]
+Explanation: Intervals [1,4] and [4,5] are considered overlapping.
 */
 
 /**
  * Approach 1: Brute Force
  *
- * Generate all possible subarrays and calculate the sum of each subarray.
- * Keep track of the maximum sum encountered.  This is the most straightforward
- * approach, but it's also the least efficient due to its triple nested loop.
+ * For each interval, compare it with every other interval to check for overlap.
+ * If an overlap is found, merge them and add the merged interval to a new list.
+ * This approach is inefficient due to its nested loops.  It's tricky to avoid
+ * adding duplicate intervals and handling all edge cases correctly.
  *
- * Time Complexity: O(n^3), where n is the length of the input array `nums`.
- * Space Complexity: O(1), constant extra space.
+ * Time Complexity: O(n^2), where n is the number of intervals.
+ * Space Complexity: O(n), to store the merged intervals.
  */
-function maxSubarrayBruteForce(nums) {
-    let maxSum = -Infinity; // Initialize with negative infinity to handle arrays with all negative numbers
+function mergeIntervalsBruteForce(intervals) {
+    const mergedIntervals = [];
+    const n = intervals.length;
+    const visited = new Array(n).fill(false);
 
-    for (let i = 0; i < nums.length; i++) {
-        for (let j = i; j < nums.length; j++) {
-            let currentSum = 0;
-            for (let k = i; k <= j; k++) {
-                currentSum += nums[k];
+    for (let i = 0; i < n; i++) {
+        if (visited[i]) continue; // Skip if this interval has already been merged
+
+        let currentStart = intervals[i][0];
+        let currentEnd = intervals[i][1];
+        visited[i] = true;
+
+        for (let j = 0; j < n; j++) {
+            if (i === j || visited[j]) continue; // Skip self and already merged intervals
+
+            const otherStart = intervals[j][0];
+            const otherEnd = intervals[j][1];
+
+            // Check for overlap and merge
+            if (
+                (otherStart >= currentStart && otherStart <= currentEnd) ||
+                (otherEnd >= currentStart && otherEnd <= currentEnd) ||
+                (currentStart >= otherStart && currentStart <= otherEnd) // Added this condition
+            ) {
+                currentStart = Math.min(currentStart, otherStart);
+                currentEnd = Math.max(currentEnd, otherEnd);
+                visited[j] = true;
+                j = -1; // Restart the inner loop to check for further merges
             }
-            maxSum = Math.max(maxSum, currentSum);
         }
+        mergedIntervals.push([currentStart, currentEnd]);
     }
-    return maxSum;
+    return mergedIntervals;
 }
+
 
 /**
- * Approach 2: Slightly Optimized Brute Force
+ * Approach 2: Sorting and Iterative Merging
  *
- * This approach is similar to the brute force approach, but it eliminates one loop.
- * Instead of recalculating the sum of the subarray in the innermost loop, it
- * incrementally adds elements.
+ * Sort the intervals by their start times. This allows us to efficiently check for overlaps
+ * in a single pass.  Iterate through the sorted intervals, merging overlapping intervals
+ * as we encounter them. This is a standard and efficient approach.
  *
- * Time Complexity: O(n^2), where n is the length of the input array `nums`.
- * Space Complexity: O(1), constant extra space.
+ * Time Complexity: O(n log n), due to the sorting step.
+ * Space Complexity: O(n), to store the merged intervals (in the worst case).  Could be O(1) if done in-place.
  */
-function maxSubarrayOptimizedBruteForce(nums) {
-    let maxSum = -Infinity;
-
-    for (let i = 0; i < nums.length; i++) {
-        let currentSum = 0;
-        for (let j = i; j < nums.length; j++) {
-            currentSum += nums[j];
-            maxSum = Math.max(maxSum, currentSum);
-        }
-    }
-    return maxSum;
-}
-
-/**
- * Approach 3: Divide and Conquer
- *
- * Recursively divide the array into two halves and find the maximum subarray sum in each half.
- * The maximum subarray sum can either be entirely in the left half, entirely in the right half,
- * or cross the midpoint.  The crossing subarray requires a separate calculation.
- *
- * Time Complexity: O(n log n), where n is the length of the input array `nums`.
- * Space Complexity: O(log n), due to the recursive call stack.
- */
-function maxSubarrayDivideAndConquer(nums, left = 0, right = nums.length - 1) {
-    if (left === right) {
-        return nums[left];
+function mergeIntervalsSortAndMerge(intervals) {
+    if (intervals.length <= 1) {
+        return intervals;
     }
 
-    const mid = Math.floor((left + right) / 2);
-    const leftSum = maxSubarrayDivideAndConquer(nums, left, mid);
-    const rightSum = maxSubarrayDivideAndConquer(nums, mid + 1, right);
-    const crossSum = maxCrossingSum(nums, left, mid, right);
+    // Sort intervals by start time
+    intervals.sort((a, b) => a[0] - b[0]);
 
-    return Math.max(leftSum, rightSum, crossSum);
-}
+    const mergedIntervals = [intervals[0]]; // Start with the first interval
+    for (let i = 1; i < intervals.length; i++) {
+        const currentInterval = intervals[i];
+        const lastMergedInterval = mergedIntervals[mergedIntervals.length - 1];
 
-function maxCrossingSum(nums, left, mid, right) {
-    let leftSum = -Infinity;
-    let currentSum = 0;
-    for (let i = mid; i >= left; i--) {
-        currentSum += nums[i];
-        leftSum = Math.max(leftSum, currentSum);
-    }
+        const currentStart = currentInterval[0];
+        const currentEnd = currentInterval[1];
+        const lastMergedEnd = lastMergedInterval[1];
 
-    let rightSum = -Infinity;
-    currentSum = 0;
-    for (let i = mid + 1; i <= right; i++) {
-        currentSum += nums[i];
-        rightSum = Math.max(rightSum, currentSum);
-    }
-
-    return leftSum + rightSum;
-}
-
-/**
- * Approach 4: Kadane's Algorithm (Dynamic Programming)
- *
- * Kadane's algorithm is the most efficient way to solve the maximum subarray problem.
- * It uses dynamic programming to keep track of the maximum subarray sum ending at each position.
- * The core idea is that if the current subarray sum becomes negative, it's better to start a new
- * subarray from the next element.
- *
- * Time Complexity: O(n), where n is the length of the input array `nums`.
- * Space Complexity: O(1), constant extra space.
- */
-function maxSubarrayKadane(nums) {
-    let maxSoFar = -Infinity;
-    let maxEndingHere = 0;
-
-    for (let i = 0; i < nums.length; i++) {
-        maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);
-        maxSoFar = Math.max(maxSoFar, maxEndingHere);
-    }
-    return maxSoFar;
-}
-
-/**
- * Approach 5: Kadane's Algorithm (with start and end index)
- *
- * This is a variation of Kadane's Algorithm that also tracks the start and end indices
- * of the maximum subarray.
- *
- * Time Complexity: O(n), where n is the length of the input array `nums`.
- * Space Complexity: O(1), constant extra space.
- */
-function maxSubarrayKadaneWithIndex(nums) {
-    let maxSoFar = -Infinity;
-    let maxEndingHere = 0;
-    let start = 0;
-    let end = 0;
-    let tempStart = 0;
-
-    for (let i = 0; i < nums.length; i++) {
-        if (nums[i] > maxEndingHere + nums[i]) {
-            maxEndingHere = nums[i];
-            tempStart = i; // Start a new subarray
+        if (currentStart <= lastMergedEnd) {
+            // Overlapping intervals, merge
+            lastMergedInterval[1] = Math.max(lastMergedInterval[1], currentEnd);
         } else {
-            maxEndingHere += nums[i];
-        }
-
-        if (maxEndingHere > maxSoFar) {
-            maxSoFar = maxEndingHere;
-            start = tempStart;
-            end = i;
+            // Non-overlapping interval, add to the result
+            mergedIntervals.push(currentInterval);
         }
     }
-    return { maxSum: maxSoFar, startIndex: start, endIndex: end };
+    return mergedIntervals;
 }
+
+/**
+ * Approach 3: Iterative with In-Place Modification (Less Space)
+ *
+ * This approach is similar to the sorting and merging approach, but it attempts to minimize
+ * space usage by modifying the input array in-place.  It can be more complex to manage the indices
+ * correctly, and it modifies the original input.
+ *
+ * Time Complexity: O(n log n), due to the sorting step.
+ * Space Complexity: O(1),  It modifies the input array.
+ */
+function mergeIntervalsInPlace(intervals) {
+    if (intervals.length <= 1) return intervals;
+
+    intervals.sort((a, b) => a[0] - b[0]); // Sort by start time
+
+    let i = 0;
+    while (i < intervals.length - 1) {
+        const current = intervals[i];
+        const next = intervals[i + 1];
+
+        if (next[0] <= current[1]) {
+            // Overlap, merge in-place
+            current[1] = Math.max(current[1], next[1]);
+            intervals.splice(i + 1, 1); // Remove the next interval
+        } else {
+            i++;
+        }
+    }
+    return intervals;
+}
+
+/**
+ * Approach 4: Using Reduce
+ *
+ * This approach uses the reduce method to iterate through the sorted intervals and merge them.
+ * It's a functional approach that can be concise but might be slightly less readable for those
+ * not very familiar with reduce.
+ *
+ * Time Complexity: O(n log n), due to sorting.
+ * Space Complexity: O(n), for the accumulated merged intervals.
+ */
+function mergeIntervalsReduce(intervals) {
+    if (intervals.length <= 1) return intervals;
+
+    const sortedIntervals = [...intervals].sort((a, b) => a[0] - b[0]); // Avoid mutating original
+
+    return sortedIntervals.reduce((merged, interval) => {
+        if (merged.length === 0 || interval[0] > merged[merged.length - 1][1]) {
+            merged.push(interval);
+        } else {
+            merged[merged.length - 1][1] = Math.max(merged[merged.length - 1][1], interval[1]);
+        }
+        return merged;
+    }, []);
+}
+
+/**
+ * Approach 5:  Sorting and Iterating with ForEach
+ *
+ * This approach sorts the intervals and then uses a forEach loop to iterate through them.
+ * It's very similar to Approach 2, but uses a different way to loop through the sorted intervals.
+ *
+ * Time Complexity: O(n log n), due to the sorting step.
+ * Space Complexity: O(n), to store the merged intervals.
+ */
+function mergeIntervalsSortAndForEach(intervals) {
+      if (intervals.length <= 1) {
+        return intervals;
+    }
+
+    // Sort intervals by start time
+    intervals.sort((a, b) => a[0] - b[0]);
+
+    const mergedIntervals = [];
+    let previousInterval = intervals[0];  // Start with the first interval
+    mergedIntervals.push(previousInterval);
+
+    intervals.forEach((currentInterval, index) => {
+        if(index === 0) return; //skip the first interval, already in mergedIntervals
+        const currentStart = currentInterval[0];
+        const currentEnd = currentInterval[1];
+        const lastMergedEnd = previousInterval[1];
+
+        if (currentStart <= lastMergedEnd) {
+            // Overlapping intervals, merge
+            previousInterval[1] = Math.max(previousInterval[1], currentEnd);
+        } else {
+            // Non-overlapping interval, add to the result
+            mergedIntervals.push(currentInterval);
+            previousInterval = currentInterval; //update previousInterval
+        }
+    });
+    return mergedIntervals;
+}
+
 
 
 // Example Usage and Output
-const nums1 = [-2, 1, -3, 4, -1, 2, 1, -5, 4];
-const nums2 = [1];
-const nums3 = [5, 4, -1, 7, 8];
-const nums4 = [-2, -3, -4, -5];
-const nums5 = [-2, 1, -3, 4, -1, 2, 1, -5, 4];
+const intervals1 = [[1, 3], [2, 6], [8, 10], [15, 18]];
+const intervals2 = [[1, 4], [4, 5]];
+const intervals3 = [[1, 4], [0, 4]];
+const intervals4 = [[2,3],[4,5],[6,7],[8,9],[1,10]];
+const intervals5 = [[2,2],[5,5],[2,2],[1,8],[0,1]];
 
 
-console.log("Input: [-2, 1, -3, 4, -1, 2, 1, -5, 4]");
-console.log("Brute Force:", maxSubarrayBruteForce(nums1));             // Output: 6
-console.log("Optimized Brute Force:", maxSubarrayOptimizedBruteForce(nums1));  // Output: 6
-console.log("Divide and Conquer:", maxSubarrayDivideAndConquer(nums1));       // Output: 6
-console.log("Kadane's Algorithm:", maxSubarrayKadane(nums1));           // Output: 6
-console.log("Kadane's with Index:", maxSubarrayKadaneWithIndex(nums1)); // Output: { maxSum: 6, startIndex: 3, endIndex: 6 }
+console.log("Input: [[1,3],[2,6],[8,10],[15,18]]");
+console.log("Brute Force:", mergeIntervalsBruteForce(intervals1));        // Output: [[1, 6], [8, 10], [15, 18]]
+console.log("Sort and Merge:", mergeIntervalsSortAndMerge(intervals1));    // Output: [[1, 6], [8, 10], [15, 18]]
+console.log("In-Place:", mergeIntervalsInPlace(intervals1));           // Output: [[1, 6], [8, 10], [15, 18]]
+console.log("Reduce:", mergeIntervalsReduce(intervals1));               // Output: [[1, 6], [8, 10], [15, 18]]
+console.log("Sort and ForEach:", mergeIntervalsSortAndForEach(intervals1)); // Output: [[1, 6], [8, 10], [15, 18]]
 
-console.log("\nInput: [1]");
-console.log("Brute Force:", maxSubarrayBruteForce(nums2));             // Output: 1
-console.log("Optimized Brute Force:", maxSubarrayOptimizedBruteForce(nums2));  // Output: 1
-console.log("Divide and Conquer:", maxSubarrayDivideAndConquer(nums2));       // Output: 1
-console.log("Kadane's Algorithm:", maxSubarrayKadane(nums2));           // Output: 1
-console.log("Kadane's with Index:", maxSubarrayKadaneWithIndex(nums2)); // Output: { maxSum: 1, startIndex: 0, endIndex: 0 }
+console.log("\nInput: [[1,4],[4,5]]");
+console.log("Brute Force:", mergeIntervalsBruteForce(intervals2));        // Output: [[1, 5]]
+console.log("Sort and Merge:", mergeIntervalsSortAndMerge(intervals2));    // Output: [[1, 5]]
+console.log("In-Place:", mergeIntervalsInPlace(intervals2));           // Output: [[1, 5]]
+console.log("Reduce:", mergeIntervalsReduce(intervals2));               // Output: [[1, 5]]
+console.log("Sort and ForEach:", mergeIntervalsSortAndForEach(intervals2)); // Output: [[1, 5]]
 
-console.log("\nInput: [5, 4, -1, 7, 8]");
-console.log("Brute Force:", maxSubarrayBruteForce(nums3));             // Output: 23
-console.log("Optimized Brute Force:", maxSubarrayOptimizedBruteForce(nums3));  // Output: 23
-console.log("Divide and Conquer:", maxSubarrayDivideAndConquer(nums3));       // Output: 23
-console.log("Kadane's Algorithm:", maxSubarrayKadane(nums3));           // Output: 23
-console.log("Kadane's with Index:", maxSubarrayKadaneWithIndex(nums3)); // Output: { maxSum: 23, startIndex: 0, endIndex: 4 }
+console.log("\nInput: [[1,4],[0,4]]");
+console.log("Brute Force:", mergeIntervalsBruteForce(intervals3));       // Output: [[0, 4]]
+console.log("Sort and Merge:", mergeIntervalsSortAndMerge(intervals3));   // Output: [[0, 4]]
+console.log("In-Place:", mergeIntervalsInPlace(intervals3));          // Output: [[0, 4]]
+console.log("Reduce:", mergeIntervalsReduce(intervals3));              // Output: [[0, 4]]
+console.log("Sort and ForEach:", mergeIntervalsSortAndForEach(intervals3)); // Output: [[0, 4]]
 
-console.log("\nInput: [-2, -3, -4, -5]");
-console.log("Brute Force:", maxSubarrayBruteForce(nums4));             // Output: -2
-console.log("Optimized Brute Force:", maxSubarrayOptimizedBruteForce(nums4));  // Output: -2
-console.log("Divide and Conquer:", maxSubarrayDivideAndConquer(nums4));       // Output: -2
-console.log("Kadane's Algorithm:", maxSubarrayKadane(nums4));           // Output: -2
-console.log("Kadane's with Index:", maxSubarrayKadaneWithIndex(nums4)); // Output: { maxSum: -2, startIndex: 0, endIndex: 0 }
+console.log("\nInput: [[2,3],[4,5],[6,7],[8,9],[1,10]]");
+console.log("Brute Force:", mergeIntervalsBruteForce(intervals4));       // Output: [[1, 10]]
+console.log("Sort and Merge:", mergeIntervalsSortAndMerge(intervals4));   // Output: [[1, 10]]
+console.log("In-Place:", mergeIntervalsInPlace(intervals4));          // Output: [[1, 10]]
+console.log("Reduce:", mergeIntervalsReduce(intervals4));              // Output: [[1, 10]]
+console.log("Sort and ForEach:", mergeIntervalsSortAndForEach(intervals4)); // Output: [[1, 10]]
+
+console.log("\nInput: [[2,2],[5,5],[2,2],[1,8],[0,1]]");
+console.log("Brute Force:", mergeIntervalsBruteForce(intervals5));       // Output: [[0, 1], [2, 2], [5, 5], [1, 8]]
+console.log("Sort and Merge:", mergeIntervalsSortAndMerge(intervals5));   // Output: [[0, 8]]
+console.log("In-Place:", mergeIntervalsInPlace(intervals5));          // Output:  [[0, 8]]
+console.log("Reduce:", mergeIntervalsReduce(intervals5));              // Output: [[0, 8]]
+console.log("Sort and ForEach:", mergeIntervalsSortAndForEach(intervals5)); // Output:  [[0, 8]]
