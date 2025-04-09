@@ -1,219 +1,186 @@
-/**
- * Definition for a binary tree node.
- * function TreeNode(val, left, right) {
- * this.val = (val===undefined ? 0 : val)
- * this.left = (left===undefined ? null : left)
- * this.right = (right===undefined ? null : right)
- * }
- */
-
-// Helper function to create a TreeNode
+// Definition for a binary tree node.
 function TreeNode(val, left, right) {
-    this.val = (val === undefined ? 0 : val);
-    this.left = (left === undefined ? null : left);
-    this.right = (right === undefined ? null : right);
+    this.val = (val===undefined ? 0 : val)
+    this.left = (left===undefined ? null : left)
+    this.right = (right===undefined ? null : right)
 }
 
-// Helper function to build a tree from an array (for testing)
-function buildTreeFromArray(arr) {
-    if (!arr || arr.length === 0) {
-        return null;
-    }
-
-    const nodes = arr.map(val => val === null ? null : new TreeNode(val));
-    const n = nodes.length;
-    for (let i = 0; i < n; i++) {
-        if (nodes[i]) {
-            const leftIndex = 2 * i + 1;
-            const rightIndex = 2 * i + 2;
-            nodes[i].left = leftIndex < n ? nodes[leftIndex] : null;
-            nodes[i].right = rightIndex < n ? nodes[rightIndex] : null;
-        }
-    }
-    return nodes[0];
-}
-
-/*
- * Approach 1: Recursive with Global Variable
- * - Calculate the height of the left and right subtrees recursively.
- * - The diameter at each node is the sum of the heights of its left and right subtrees.
- * - Use a global variable to keep track of the maximum diameter found so far.
+/**
+ * Diameter of a Binary Tree
+ *
+ * Given the root of a binary tree, return the length of the diameter of the tree.
+ *
+ * The diameter of a binary tree is the length of the longest path between any two nodes in a tree. This path may or may not pass through the root.
+ * The length of a path between two nodes is represented by the number of edges between them.
+ *
+ * Example 1:
+ *
+ * Input: root = [1,2,3,4,5]
+ * Output: 3
+ * Explanation: 3 is the length of the path [4,2,1,3] or [5,2,1,3].
+ *
+ * Example 2:
+ *
+ * Input: root = [1,2]
+ * Output: 1
+ *
+ * Constraints:
+ *
+ * The number of nodes in the tree is in the range [1, 10^4].
+ * 0 <= Node.val <= 100
  */
-function diameterOfBinaryTree1(root) {
-    let maxDiameter = 0;
 
-    function getHeight(node) {
+// Approach 1: Recursive with Global Variable
+// Time Complexity: O(N), Space Complexity: O(H) where H is the height of the tree.
+var diameterOfBinaryTree1 = function(root) {
+    let diameter = 0;
+
+    function dfs(node) {
         if (!node) {
             return 0;
         }
 
-        const leftHeight = getHeight(node.left);
-        const rightHeight = getHeight(node.right);
-        maxDiameter = Math.max(maxDiameter, leftHeight + rightHeight);
+        let leftHeight = dfs(node.left);
+        let rightHeight = dfs(node.right);
+
+        diameter = Math.max(diameter, leftHeight + rightHeight);
         return Math.max(leftHeight, rightHeight) + 1;
     }
 
-    getHeight(root);
-    return maxDiameter;
-}
+    dfs(root);
+    return diameter;
+};
 
-/*
- * Approach 2: Recursive with Return Value
- * - Similar to approach 1, but instead of using a global variable,
- * return the diameter along with the height from the recursive function.
- * - This approach is cleaner as it avoids modifying external state.
- */
-function diameterOfBinaryTree2(root) {
-    function getHeightAndDiameter(node) {
+// Approach 2: Recursive with Returning an Array
+// Time Complexity: O(N), Space Complexity: O(H)
+var diameterOfBinaryTree2 = function(root) {
+    function dfs(node) {
         if (!node) {
-            return { height: 0, diameter: 0 };
+            return [0, 0]; // [height, diameter]
         }
 
-        const leftResult = getHeightAndDiameter(node.left);
-        const rightResult = getHeightAndDiameter(node.right);
-        const height = Math.max(leftResult.height, rightResult.height) + 1;
-        const diameter = Math.max(
-            leftResult.diameter,
-            rightResult.diameter,
-            leftResult.height + rightResult.height
-        );
-        return { height, diameter };
+        let [leftHeight, leftDiameter] = dfs(node.left);
+        let [rightHeight, rightDiameter] = dfs(node.right);
+
+        let height = Math.max(leftHeight, rightHeight) + 1;
+        let diameter = Math.max(leftDiameter, rightDiameter, leftHeight + rightHeight);
+        return [height, diameter];
     }
 
-    const result = getHeightAndDiameter(root);
-    return result.diameter;
-}
+    const result = dfs(root);
+    return result[1];
+};
 
-/*
- * Approach 3: Iterative using Stack (Post-order Traversal)
- * - Use a stack to perform a post-order traversal of the tree.
- * - Store the height of each node in a map.
- * - Calculate the diameter at each node while popping it from the stack.
- */
-function diameterOfBinaryTree3(root) {
+// Approach 3: Iterative using Stack (Post-order Traversal)
+// Time Complexity: O(N), Space Complexity: O(H)
+var diameterOfBinaryTree3 = function(root) {
     if (!root) return 0;
 
-    const stack = [];
-    const nodeHeights = new Map();
-    let maxDiameter = 0;
-    let curr = root;
-
-    while (curr || stack.length > 0) {
-        if (curr) {
-            stack.push(curr);
-            curr = curr.left;
-        } else {
-            const node = stack[stack.length - 1];
-            if (node.right && node.right !== curr) {
-                curr = node.right;
-            } else {
-                stack.pop();
-                const leftHeight = nodeHeights.get(node.left) || 0;
-                const rightHeight = nodeHeights.get(node.right) || 0;
-                maxDiameter = Math.max(maxDiameter, leftHeight + rightHeight);
-                nodeHeights.set(node, Math.max(leftHeight, rightHeight) + 1);
-                curr = null; // Corrected: Avoid infinite loop.
-            }
-        }
-    }
-    return maxDiameter;
-}
-
-/*
- * Approach 4: Iterative using Morris Traversal (No Stack, No Map)
- * - Morris traversal is a way to traverse a tree without using a stack or recursion.
- * - It works by modifying the tree structure temporarily.
- * - This approach is more space-efficient than the stack-based approach.
- */
-function diameterOfBinaryTree4(root) {
-    let maxDiameter = 0;
-    let curr = root;
-
-    while (curr) {
-        if (!curr.left) {
-            curr = curr.right;
-        } else {
-            let predecessor = curr.left;
-            while (predecessor.right && predecessor.right !== curr) {
-                predecessor = predecessor.right;
-            }
-
-            if (!predecessor.right) {
-                predecessor.right = curr;
-                curr = curr.left;
-            } else {
-                predecessor.right = null; // Restore the tree structure
-                const leftHeight = getHeight(curr.left); // Corrected: use helper
-                const rightHeight = getHeight(curr.right); // Corrected: use helper.
-                maxDiameter = Math.max(maxDiameter, leftHeight + rightHeight);
-                curr = curr.right;
-            }
-        }
-    }
-
-    function getHeight(node) { // Corrected: added helper function
-        if (!node) return 0;
-        return Math.max(getHeight(node.left), getHeight(node.right)) + 1;
-    }
-
-    return maxDiameter;
-}
-
-/*
- * Approach 5: Optimized Recursive (Slightly more efficient)
- * - Combines the efficiency of calculating height and diameter in one pass,
- * - Uses a single recursive function, similar to Approach 2, but potentially
- * with slightly improved performance due to reduced function call overhead
- */
-
-function diameterOfBinaryTree5(root) {
+    let stack = [];
     let diameter = 0;
+    let nodeHeights = new Map();
 
-    function calculateHeight(node) {
+    stack.push(root);
+    let prev = null;
+
+    while (stack.length > 0) {
+        let curr = stack[stack.length - 1];
+
+        if (!curr.left && !curr.right || prev && (prev === curr.left || prev === curr.right)) {
+            stack.pop();
+
+            let leftHeight = nodeHeights.get(curr.left) || 0;
+            let rightHeight = nodeHeights.get(curr.right) || 0;
+
+            diameter = Math.max(diameter, leftHeight + rightHeight);
+            nodeHeights.set(curr, Math.max(leftHeight, rightHeight) + 1);
+            prev = curr;
+        } else {
+            if (curr.right) stack.push(curr.right);
+            if (curr.left) stack.push(curr.left);
+        }
+    }
+    return diameter;
+};
+
+// Approach 4: Using a Class to store the diameter
+class TreeInfo {
+  constructor() {
+    this.diameter = 0;
+  }
+}
+
+var diameterOfBinaryTree4 = function(root) {
+    const treeInfo = new TreeInfo();
+
+    function dfs(node, treeInfo) {
         if (!node) {
             return 0;
         }
+
+        let leftHeight = dfs(node.left, treeInfo);
+        let rightHeight = dfs(node.right, treeInfo);
+
+        treeInfo.diameter = Math.max(treeInfo.diameter, leftHeight + rightHeight);
+        return Math.max(leftHeight, rightHeight) + 1;
+    }
+
+    dfs(root, treeInfo);
+    return treeInfo.diameter;
+};
+
+// Approach 5:  Similar to approach 1, but with slight optimization in variable naming
+var diameterOfBinaryTree5 = function(root) {
+    let maxDiameter = 0;
+
+    function calculateHeight(node) {
+        if (!node) return 0;
 
         const leftHeight = calculateHeight(node.left);
         const rightHeight = calculateHeight(node.right);
 
-        diameter = Math.max(diameter, leftHeight + rightHeight);
-
+        maxDiameter = Math.max(maxDiameter, leftHeight + rightHeight);
         return Math.max(leftHeight, rightHeight) + 1;
     }
 
     calculateHeight(root);
-    return diameter;
-}
+    return maxDiameter;
+};
 
-// Example Usage and Testing
-const testCases = [
-    [1, 2, 3, 4, 5],
-    [1, 2, 3, null, null, 4, 5],
-    [1],
-    [],
-    [1, 2],
-    [1, null, 2, 3, 4, null, null, 5, 6], // More complex case
-    [4,-7,-3,null,null,-9,-3,9,-7,-4,null,6,null,-6,-6,null,null,0,6,5,null,9,null,null,-1,-4,null,null,null,-2], //From LeetCode
-    [2,null,3,null,4,null,5,null,6] // another test
-];
+// Test Cases
+const root1 = new TreeNode(1,
+    new TreeNode(2,
+        new TreeNode(4),
+        new TreeNode(5)),
+    new TreeNode(3));
 
-testCases.forEach((arr, index) => {
-    const root = buildTreeFromArray(arr);
-    console.log(`\nTest Case ${index + 1}: Input Array = ${JSON.stringify(arr)}`);
+const root2 = new TreeNode(1, new TreeNode(2));
 
-    // Approach 1
-    console.log(`Approach 1: Recursive with Global Variable - Diameter: ${diameterOfBinaryTree1(root)}`);
+const root3 = new TreeNode(1,
+    new TreeNode(2,
+        new TreeNode(4, new TreeNode(6), new TreeNode(7)),
+        new TreeNode(5)),
+    new TreeNode(3,
+        new TreeNode(8),
+        new TreeNode(9)));
 
-    // Approach 2
-    console.log(`Approach 2: Recursive with Return Value - Diameter: ${diameterOfBinaryTree2(root)}`);
+console.log("Test Case 1:");
+console.log("Approach 1:", diameterOfBinaryTree1(root1)); // Output: 3
+console.log("Approach 2:", diameterOfBinaryTree2(root1)); // Output: 3
+console.log("Approach 3:", diameterOfBinaryTree3(root1)); // Output: 3
+console.log("Approach 4:", diameterOfBinaryTree4(root1)); // Output: 3
+console.log("Approach 5:", diameterOfBinaryTree5(root1)); // Output: 3
 
-    // Approach 3
-    console.log(`Approach 3: Iterative using Stack - Diameter: ${diameterOfBinaryTree3(root)}`);
+console.log("\nTest Case 2:");
+console.log("Approach 1:", diameterOfBinaryTree1(root2)); // Output: 1
+console.log("Approach 2:", diameterOfBinaryTree2(root2)); // Output: 1
+console.log("Approach 3:", diameterOfBinaryTree3(root2)); // Output: 1
+console.log("Approach 4:", diameterOfBinaryTree4(root2)); // Output: 1
+console.log("Approach 5:", diameterOfBinaryTree5(root2)); // Output: 1
 
-    // Approach 4
-    console.log(`Approach 4: Iterative using Morris Traversal - Diameter: ${diameterOfBinaryTree4(root)}`);
-
-     // Approach 5
-    console.log(`Approach 5: Optimized Recursive - Diameter: ${diameterOfBinaryTree5(root)}`);
-});
+console.log("\nTest Case 3:");
+console.log("Approach 1:", diameterOfBinaryTree1(root3)); // Output: 4
+console.log("Approach 2:", diameterOfBinaryTree2(root3)); // Output: 4
+console.log("Approach 3:", diameterOfBinaryTree3(root3)); // Output: 4
+console.log("Approach 4:", diameterOfBinaryTree4(root3)); // Output: 4
+console.log("Approach 5:", diameterOfBinaryTree5(root3)); // Output: 4
