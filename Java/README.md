@@ -1,4 +1,4 @@
-# LeetCode Problem-Solving Guide in JavaScript
+# LeetCode Problem-Solving Guide in Java Programming
 
 ## Topics and Algorithms
 
