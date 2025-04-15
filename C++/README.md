@@ -193,4 +193,4 @@
 - **Manacher’s Algorithm (Longest Palindromic Substring in O(n))**  
 
 ## How to Proceed?
-Start with **arrays & hashing**, or pick a category of interest. You can also follow a structured roadmap by solving problems step by step using JavaScript.
+Start with **arrays & hashing**, or pick a category of interest. You can also follow a structured roadmap by solving problems step by step using C++
