@@ -1,141 +1,154 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <string>
-#include <climits>
+#include <limits>
+#include <numeric>
 #include <unordered_map>
-#include <unordered_set> // Include the unordered_set header
+#include <deque>
 
 using namespace std;
 
-// Function to find the maximum sum of a subarray of size k (Fixed Sliding Window)
-// Approach 1: Fixed Sliding Window
-int maxSubarraySum(const vector<int>& arr, int k) {
-    if (arr.size() < k) {
-        return -1; // Invalid input
+// Function to find the maximum sum of a subarray of size k (Fixed Size Window)
+int maxSubarraySumFixedSize(const vector<int>& arr, int k) {
+    int n = arr.size();
+    if (n < k) {
+        return -1; // Invalid input: k is larger than array size
     }
 
-    int max_sum = 0;
-    int current_sum = 0;
+    int max_sum = numeric_limits<int>::min(); // Initialize max_sum to the smallest possible integer
+    int window_sum = 0;
 
-    // Calculate the sum of the first k elements
+    // Calculate the sum of the first window
     for (int i = 0; i < k; ++i) {
-        current_sum += arr[i];
+        window_sum += arr[i];
     }
-    max_sum = current_sum;
+    max_sum = window_sum; //initialize max_sum
 
     // Slide the window through the rest of the array
-    for (int i = k; i < arr.size(); ++i) {
-        current_sum += (arr[i] - arr[i - k]); // Add the new element, subtract the oldest
-        max_sum = max(max_sum, current_sum);   // Update the maximum sum
+    for (int i = k; i < n; ++i) {
+        window_sum += arr[i] - arr[i - k]; // Add the new element and subtract the oldest
+        max_sum = max(max_sum, window_sum); // Update max_sum if the current window sum is larger
     }
 
     return max_sum;
 }
 
-// Function to find the length of the longest substring without repeating characters
-// Approach 2: Dynamic Sliding Window with a Set
-int longestUniqueSubstr(const string& str) {
+// Function to find the minimum size subarray with a sum greater than or equal to a target (Dynamic Size Window - 1)
+int minSubarrayLenGreaterThanTarget(const vector<int>& arr, int target) {
+    int n = arr.size();
+    int min_len = numeric_limits<int>::max(); // Initialize min_len to the largest possible integer
+    int window_sum = 0;
+    int window_start = 0;
+
+    for (int window_end = 0; window_end < n; ++window_end) {
+        window_sum += arr[window_end]; // Expand the window
+
+        while (window_sum >= target) { // Shrink the window while the condition is met
+            min_len = min(min_len, window_end - window_start + 1); // Update min_len
+            window_sum -= arr[window_start]; // Remove the element at the start of the window
+            ++window_start; // Move the start of the window forward
+        }
+    }
+
+    return (min_len == numeric_limits<int>::max()) ? 0 : min_len; // Return 0 if no such subarray exists
+}
+
+// Function to find the longest substring without repeating characters (Dynamic Size Window - 2)
+int lengthOfLongestSubstring(const string& s) {
+    int n = s.length();
     int max_len = 0;
-    int start = 0;
-    int end = 0;
-    unordered_set<char> seen; // Use a set to track seen characters
+    int window_start = 0;
+    unordered_map<char, int> char_index_map; // Map to store the index of each character
 
-    while (end < str.length()) {
-        if (seen.find(str[end]) == seen.end()) { // If the character is not in the set
-            seen.insert(str[end]);             // Add it to the set
-            end++;                             // Expand the window
-            max_len = max(max_len, end - start); // Update max length
-        } else {
-            seen.erase(str[start]);           // Remove the leftmost character
-            start++;                           // Shrink the window
+    for (int window_end = 0; window_end < n; ++window_end) {
+        char current_char = s[window_end];
+        // If the character is already in the map and its index is within the current window
+        if (char_index_map.find(current_char) != char_index_map.end() && char_index_map[current_char] >= window_start) {
+            window_start = char_index_map[current_char] + 1; // Move the start of the window to the next character after the previous occurrence
         }
+        char_index_map[current_char] = window_end; // Update the index of the current character
+        max_len = max(max_len, window_end - window_start + 1); // Update max_len
     }
     return max_len;
 }
 
-// Function to find the minimum size subarray sum greater than or equal to a target
-// Approach 3: Dynamic Sliding Window to find min subarray
-int minSubarraySum(const vector<int>& nums, int target) {
-    int min_len = INT_MAX;
-    int start = 0;
-    int end = 0;
-    int current_sum = 0;
-
-    while (end < nums.size()) {
-        current_sum += nums[end]; // Expand the window
-        end++;
-
-        while (current_sum >= target) {
-            min_len = min(min_len, end - start); // Update min length
-            current_sum -= nums[start];         // Shrink the window
-            start++;
-        }
+// Function to find the maximum sum of a subarray of size k, handling negative numbers (Fixed Size Window with negative numbers)
+int maxSubarraySumFixedSizeNegative(const vector<int>& arr, int k) {
+    int n = arr.size();
+    if (n < k) {
+        return -1; // Invalid input: k is larger than array size
     }
-    return (min_len == INT_MAX) ? 0 : min_len; // Return 0 if no such subarray exists
+
+    int max_sum = numeric_limits<int>::min();
+    int window_sum = 0;
+
+    // Calculate the sum of the first window
+    for (int i = 0; i < k; ++i) {
+        window_sum += arr[i];
+    }
+    max_sum = window_sum;
+
+    // Slide the window through the rest of the array
+    for (int i = k; i < n; ++i) {
+        window_sum += arr[i] - arr[i - k];
+        max_sum = max(max_sum, window_sum);
+    }
+
+    return max_sum;
 }
 
-// Function to count the number of subarrays with sum equal to k
-// Approach 4: Using a Hash Map to store prefix sums
-int subarraySumK(const vector<int>& nums, int k) {
-    int count = 0;
-    int current_sum = 0;
-    unordered_map<int, int> sum_map; // Map to store prefix sums and their frequencies
-    sum_map[0] = 1; // Initialize with sum 0 occurring once (empty subarray)
+// Function to find the maximum of all subarrays of size k using a deque (Fixed Size Window - Deque)
+vector<int> maxSlidingWindow(const vector<int>& nums, int k) {
+    int n = nums.size();
+    vector<int> result;
+    deque<int> dq; // Use a deque to store indices
 
-    for (int num : nums) {
-        current_sum += num;
-        // If there's a prefix sum (current_sum - k), then there's a subarray ending at the current index with sum k
-        if (sum_map.find(current_sum - k) != sum_map.end()) {
-            count += sum_map[current_sum - k];
-        }
-        sum_map[current_sum]++; // Update frequency of the current prefix sum
+    if (n < k || k <= 0) {
+        return result; // Handle edge cases
     }
-    return count;
-}
 
-// Function to find the longest substring with at most K distinct characters
-// Approach 5: Dynamic Sliding Window with Character Frequency Map
-int longestSubstringWithKDistinct(const string& s, int k) {
-    int start = 0, end = 0, max_len = 0;
-    unordered_map<char, int> freq_map; // Map to store character frequencies
-
-    while (end < s.length()) {
-        freq_map[s[end]]++; // Add the character to the frequency map
-        end++;
-
-        while (freq_map.size() > k) { // If the number of distinct characters exceeds k
-            freq_map[s[start]]--;     // Decrease the frequency of the leftmost character
-            if (freq_map[s[start]] == 0) {
-                freq_map.erase(s[start]); // Remove the character if its frequency becomes 0
-            }
-            start++; // Shrink the window
+    for (int i = 0; i < n; ++i) {
+        // Remove elements out of the window
+        while (!dq.empty() && dq.front() < i - k + 1) {
+            dq.pop_front();
         }
-        max_len = max(max_len, end - start); // Update max length
+        // Remove smaller elements from the back
+        while (!dq.empty() && nums[dq.back()] < nums[i]) {
+            dq.pop_back();
+        }
+        dq.push_back(i); // Add current element's index
+        if (i >= k - 1) {
+            result.push_back(nums[dq.front()]); // The front of the deque is the index of the largest element in the window
+        }
     }
-    return max_len;
+    return result;
 }
 
 int main() {
     // Example usage of the functions
-    vector<int> arr = {1, 4, 2, 10, 23, 3, 1, 0, 20};
-    int k = 4;
-    cout << "Maximum subarray sum of size " << k << ": " << maxSubarraySum(arr, k) << endl;
+    vector<int> arr1 = {1, 4, 2, 10, 23, 3, 1, 0, 20};
+    int k1 = 4;
+    cout << "Maximum subarray sum of size " << k1 << ": " << maxSubarraySumFixedSize(arr1, k1) << endl; // Output: 39
 
-    string str = "abcabcbb";
-    cout << "Length of longest unique substring: " << longestUniqueSubstr(str) << endl;
+    vector<int> arr2 = {2, 3, 1, 2, 4, 3};
+    int target2 = 7;
+    cout << "Minimum subarray length with sum >= " << target2 << ": " << minSubarrayLenGreaterThanTarget(arr2, target2) << endl; // Output: 2
 
-    vector<int> nums = {2, 3, 1, 2, 4, 3};
-    int target = 7;
-    cout << "Minimum subarray length with sum >= " << target << ": " << minSubarraySum(nums, target) << endl;
+    string s3 = "abcabcbb";
+    cout << "Length of longest substring without repeating characters: " << lengthOfLongestSubstring(s3) << endl; // Output: 3
 
-    vector<int> nums2 = {1, 1, 1};
-    int target2 = 2;
-    cout << "Subarray count with sum  = " << target2 << ": " << subarraySumK(nums2, target2) << endl;
+    vector<int> arr4 = {-2, -3, 4, -1, -2, 1, 5, -3};
+    int k4 = 3;
+    cout << "Maximum subarray sum of size " << k4 << " (with negative numbers): " << maxSubarraySumFixedSizeNegative(arr4, k4) << endl; // Output: 6
 
-    string s = "eceba";
-    int kDistinct = 2;
-    cout << "Longest substring with at most " << kDistinct << " distinct characters: " << longestSubstringWithKDistinct(s, kDistinct) << endl;
+    vector<int> nums5 = {1, 3, -1, -3, 5, 3, 6, 7};
+    int k5 = 3;
+    vector<int> result5 = maxSlidingWindow(nums5, k5);
+    cout << "Maximums of sliding windows of size " << k5 << ": ";
+    for (int num : result5) {
+        cout << num << " ";
+    }
+    cout << endl; // Output: 3 3 5 5 6 7
 
     return 0;
 }
