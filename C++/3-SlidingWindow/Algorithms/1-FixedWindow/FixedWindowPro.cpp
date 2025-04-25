@@ -1,228 +1,204 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-#include <limits> // Required for numeric_limits
-#include <string>
-#include <numeric> // Required for std::accumulate
+#include <limits>
+#include <numeric>
+#include <unordered_map>
+#include <queue>
 
-// ------------------------------------------------------------------------------------------------
+using namespace std;
+
 // 1. Maximum Sum Subarray of Fixed Size K
-//
-// Problem: Given an array of integers and a positive integer K, find the maximum sum of any
-// subarray of size K.
-//
-// Application: This is a fundamental problem with applications in financial analysis (e.g.,
-// finding the most profitable K-day trading period), signal processing (e.g., smoothing
-// a noisy signal by averaging over a fixed window), and image processing (e.g., calculating
-// the average color of a K x K pixel region).
-// ------------------------------------------------------------------------------------------------
-int maxSubarraySum(const std::vector<int>& arr, int k) {
-    if (arr.size() < k || k <= 0) {
-        return 0; // Handle invalid input
+// Real-world application: Analyzing stock prices for a specific period (e.g., finding the highest average stock price over a 7-day window).
+int maxSumSubarray(const vector<int>& arr, int k) {
+    if (arr.size() < k) {
+        return -1; // Handle invalid input: window size larger than array size
     }
 
-    int max_sum = std::numeric_limits<int>::min(); // Initialize to the smallest possible integer
+    int max_sum = 0;
     int window_sum = 0;
 
     // Calculate the sum of the first window
     for (int i = 0; i < k; ++i) {
         window_sum += arr[i];
     }
-    max_sum = window_sum; //initialize max_sum
+    max_sum = window_sum; // Initialize max_sum
 
-    // Slide the window through the array
+    // Slide the window through the rest of the array
     for (int i = k; i < arr.size(); ++i) {
         window_sum += arr[i] - arr[i - k]; // Subtract the outgoing element, add the incoming
-        max_sum = std::max(max_sum, window_sum); // Update max_sum if the current window sum is larger
+        max_sum = max(max_sum, window_sum); // Update max_sum if necessary
     }
 
     return max_sum;
 }
 
-// ------------------------------------------------------------------------------------------------
-// 2. Minimum Subarray Length with Sum >= Target
-//
-// Problem: Given an array of positive integers and a target sum, find the minimum length of a
-// contiguous subarray whose sum is greater than or equal to the target.
-//
-// Application: This problem is relevant to resource allocation (e.g., finding the smallest
-// contiguous block of memory that satisfies a minimum size requirement), logistics
-// (e.g., finding the shortest route segment with a minimum delivery volume), and data
-// compression (e.g., finding the smallest buffer that can hold a minimum amount of data).
-// ------------------------------------------------------------------------------------------------
-int minSubarrayLength(const std::vector<int>& arr, int target) {
-    if (arr.empty() || target <= 0) {
-        return 0; // Handle invalid input
+// 2. Minimum Window Substring
+// Real-world application: Text processing, finding the smallest snippet of text containing all keywords.
+string minWindowSubstring(const string& s, const string& t) {
+    if (t.empty() || s.empty() || t.size() > s.size()) {
+        return ""; // Handle edge cases
     }
 
-    int min_length = std::numeric_limits<int>::max(); // Initialize to the largest possible integer
-    int window_sum = 0;
-    int window_start = 0;
-
-    for (int window_end = 0; window_end < arr.size(); ++window_end) {
-        window_sum += arr[window_end]; // Add the next element to the window
-
-        // Shrink the window while the sum is >= target
-        while (window_sum >= target) {
-            min_length = std::min(min_length, window_end - window_start + 1); //update minLength
-            window_sum -= arr[window_start]; // Subtract the element going out of the window
-            ++window_start; // Slide the window's start
-        }
-    }
-
-    return (min_length == std::numeric_limits<int>::max()) ? 0 : min_length; // Return 0 if no such subarray exists
-}
-
-// ------------------------------------------------------------------------------------------------
-// 3. Longest Substring Without Repeating Characters
-//
-// Problem: Given a string, find the length of the longest substring without repeating characters.
-//
-// Application: This problem is important in text processing, bioinformatics (e.g., finding the
-// longest non-repeating sequence of DNA), and data validation (e.g., checking for unique
-// character sequences in identifiers).
-// ------------------------------------------------------------------------------------------------
-int longestUniqueSubstringLength(const std::string& str) {
-    if (str.empty()) {
-        return 0;
-    }
-
-    int max_length = 0;
-    int window_start = 0;
-    std::vector<int> char_index(256, -1); // Store the last seen index of each character (ASCII)
-
-    for (int window_end = 0; window_end < str.length(); ++window_end) {
-        char current_char = str[window_end];
-        // If the character has been seen before and it's within the current window
-        if (char_index[current_char] >= window_start) {
-            window_start = char_index[current_char] + 1; // Move the window start to after the previous occurrence
-        }
-        char_index[current_char] = window_end; // Update the last seen index of the character
-        max_length = std::max(max_length, window_end - window_start + 1); //update maxLength
-    }
-
-    return max_length;
-}
-
-// ------------------------------------------------------------------------------------------------
-// 4.  Minimum Window Substring
-//
-// Problem: Given a string S and a string T, find the minimum window in S which will contain
-// all the characters in T in complexity O(n).
-//
-// Application: This problem is useful in text search and replacement, bioinformatics (finding
-// the shortest DNA sequence containing a given set of genes), and data mining (finding the
-// smallest subset of data containing a specific set of attributes).
-// ------------------------------------------------------------------------------------------------
-std::string minWindowSubstring(const std::string& s, const std::string& t) {
-    if (s.empty() || t.empty() || t.length() > s.length()) {
-        return ""; // Handle invalid input
-    }
-
-    std::vector<int> target_freq(256, 0); // Frequency of characters in T
-    std::vector<int> window_freq(256, 0); // Frequency of characters in the current window
-    int required_chars = 0; // Count of distinct characters needed from T
-    int formed_chars = 0;    // Count of distinct characters from T found in the current window
-
-    // Calculate frequency of characters in T
+    unordered_map<char, int> target_freq; // Frequency of characters in t
     for (char c : t) {
-        if (target_freq[c] == 0) {
-            required_chars++;
-        }
         target_freq[c]++;
     }
 
-    int window_start = 0;
-    int min_window_length = std::numeric_limits<int>::max();
-    int min_window_start = 0;
+    int required_chars = target_freq.size(); // Number of unique characters in t
+    int formed_chars = 0; // Number of unique characters in s that meet the required frequency
+    unordered_map<char, int> window_freq; // Frequency of characters in the current window
 
-    for (int window_end = 0; window_end < s.length(); ++window_end) {
-        char current_char = s[window_end];
-        window_freq[current_char]++; // Add the current character to the window
+    int min_length = numeric_limits<int>::max();
+    int start = 0;
+    int min_start = 0;
 
-        // If the frequency of the current character in the window matches the required frequency in T
-        if (target_freq[current_char] != 0 && window_freq[current_char] == target_freq[current_char]) {
-            formed_chars++; // Increment the count of formed characters
+    int left = 0;
+    for (int right = 0; right < s.size(); ++right) {
+        char current_char = s[right];
+        window_freq[current_char]++;
+
+        if (target_freq.find(current_char) != target_freq.end() &&
+            window_freq[current_char] == target_freq[current_char]) {
+            formed_chars++;
         }
 
-        // Try to minimize the window size
-        while (formed_chars == required_chars) {
-            // Update minimum window length and start index
-            if (window_end - window_start + 1 < min_window_length) {
-                min_window_length = window_end - window_start + 1;
-                min_window_start = window_start;
+        while (left <= right && formed_chars == required_chars) {
+            if (right - left + 1 < min_length) {
+                min_length = right - left + 1;
+                min_start = left;
             }
 
-            char start_char = s[window_start];
-            window_freq[start_char]--; // Remove the character at the start of the window
+            char left_char = s[left];
+            window_freq[left_char]--;
 
-            // If removing the character makes the window no longer satisfy the condition
-            if (target_freq[start_char] != 0 && window_freq[start_char] < target_freq[start_char]) {
-                formed_chars--; // Decrement the count of formed characters
+            if (target_freq.find(left_char) != target_freq.end() &&
+                window_freq[left_char] < target_freq[left_char]) {
+                formed_chars--;
             }
-            window_start++; // Shrink the window
+            left++;
         }
     }
 
-    return (min_window_length == std::numeric_limits<int>::max()) ? "" : s.substr(min_window_start, min_window_length);
+    return min_length == numeric_limits<int>::max() ? "" : s.substr(min_start, min_length);
 }
 
-// ------------------------------------------------------------------------------------------------
-// 5.  Longest Subarray with Sum at Most K
-//
-// Problem: Given an array of positive integers and a target sum K, find the length of the
-// longest subarray whose sum is at most K.
-//
-// Application: Useful in resource allocation (e.g., finding the longest time interval within
-// a budget constraint), network traffic analysis (e.g., finding the longest period with
-// bandwidth usage below a threshold), and financial analysis (e.g., finding the longest
-// period where cumulative losses are within a limit).
-// ------------------------------------------------------------------------------------------------
-
-int longestSubarrayWithSumAtMostK(const std::vector<int>& arr, int k) {
-    if (arr.empty() || k < 0) {
-        return 0;
-    }
+// 3. Longest Substring Without Repeating Characters
+// Real-world application: Data compression, finding the longest non-repeating sequence for efficient encoding.
+int longestSubstringWithoutRepeatingChars(const string& s) {
+    if (s.empty()) return 0;
 
     int max_length = 0;
-    int window_start = 0;
-    int window_sum = 0;
+    unordered_map<char, int> char_index; // Stores the last seen index of each character
+    int start = 0;
 
-    for (int window_end = 0; window_end < arr.size(); ++window_end) {
-        window_sum += arr[window_end]; // Add the next element to the window
-
-        // Shrink the window while the sum is greater than K
-        while (window_sum > k) {
-            window_sum -= arr[window_start]; // Subtract the element going out of the window
-            ++window_start; // Slide the window's start
+    for (int end = 0; end < s.size(); ++end) {
+        char current_char = s[end];
+        if (char_index.find(current_char) != char_index.end() && char_index[current_char] >= start) {
+            start = char_index[current_char] + 1; // Move start to the next position after the repeated char
         }
-
-        max_length = std::max(max_length, window_end - window_start + 1); //update the maxLen
+        char_index[current_char] = end; // Update the last seen index
+        max_length = max(max_length, end - start + 1);
     }
-
     return max_length;
 }
 
+// 4. Counting Anagrams
+// Real-world application: Bioinformatics, finding occurrences of a specific gene sequence (anagram) within a larger DNA strand.
+int countAnagrams(const string& text, const string& pattern) {
+    if (pattern.size() > text.size()) {
+        return 0; // Pattern cannot be an anagram if it's longer than the text
+    }
+
+    unordered_map<char, int> pattern_freq;
+    for (char c : pattern) {
+        pattern_freq[c]++;
+    }
+
+    int required_chars = pattern_freq.size();
+    int formed_chars = 0;
+    unordered_map<char, int> window_freq;
+    int count = 0;
+
+    int left = 0;
+    for (int right = 0; right < text.size(); ++right) {
+        char current_char = text[right];
+        window_freq[current_char]++;
+
+        if (pattern_freq.find(current_char) != pattern_freq.end() &&
+            window_freq[current_char] == pattern_freq[current_char]) {
+            formed_chars++;
+        }
+
+        if (right - left + 1 == pattern.size()) { // Window size equals pattern size
+            if (formed_chars == required_chars) {
+                count++;
+            }
+            char left_char = text[left];
+            window_freq[left_char]--;
+             if (pattern_freq.find(left_char) != pattern_freq.end() &&
+                window_freq[left_char] < pattern_freq[left_char]) {
+                formed_chars--;
+            }
+            left++;
+        }
+    }
+    return count;
+}
+
+// 5.  Sliding Window Maximum
+// Real-world application: Real-time data analysis, finding the maximum value in a stream of data within a fixed time window.
+vector<int> slidingWindowMaximum(const vector<int>& nums, int k) {
+    vector<int> result;
+    if (nums.empty() || k <= 0) return result;
+
+    deque<int> dq; // Stores indices, not values
+    for (int i = 0; i < nums.size(); ++i) {
+        // Remove elements out of the current window
+        while (!dq.empty() && dq.front() < i - k + 1) {
+            dq.pop_front();
+        }
+        // Remove smaller elements from the back
+        while (!dq.empty() && nums[dq.back()] < nums[i]) {
+            dq.pop_back();
+        }
+        dq.push_back(i); // Add the current element's index
+        if (i >= k - 1) {
+            result.push_back(nums[dq.front()]); // The front of dq is always the maximum
+        }
+    }
+    return result;
+}
+
 int main() {
-    // Example usage of the functions
-    std::vector<int> arr1 = {1, 4, 2, 10, 23, 3, 1, 0, 20};
+    // 1. Maximum Sum Subarray
+    vector<int> arr1 = {1, 4, 2, 10, 23, 3, 1, 0, 20};
     int k1 = 4;
-    std::cout << "1. Maximum Subarray Sum of size " << k1 << ": " << maxSubarraySum(arr1, k1) << std::endl; // Expected: 39
+    cout << "Maximum sum of subarray of size " << k1 << ": " << maxSumSubarray(arr1, k1) << endl; // Expected: 39
 
-    std::vector<int> arr2 = {2, 3, 1, 2, 4, 3};
-    int target2 = 7;
-    std::cout << "2. Minimum Subarray Length with Sum >= " << target2 << ": " << minSubarrayLength(arr2, target2) << std::endl; // Expected: 2
+    // 2. Minimum Window Substring
+    string s2 = "ADOBECODEBANC";
+    string t2 = "ABC";
+    cout << "Minimum window substring: " << minWindowSubstring(s2, t2) << endl; // Expected: "BANC"
 
-    std::string str3 = "abcabcbb";
-    std::cout << "3. Longest Unique Substring Length: " << longestUniqueSubstringLength(str3) << std::endl; // Expected: 3
+    // 3. Longest Substring Without Repeating Characters
+    string s3 = "abcabcbb";
+    cout << "Longest substring without repeating characters: " << longestSubstringWithoutRepeatingChars(s3) << endl; // Expected: 3
 
-    std::string s4 = "ADOBECODEBANC";
-    std::string t4 = "ABC";
-    std::cout << "4. Minimum Window Substring containing \"" << t4 << "\": \"" << minWindowSubstring(s4, t4) << "\"" << std::endl; // Expected: "BANC"
+     // 4. Counting Anagrams
+    string text4 = "BACDGABCDAABCD";
+    string pattern4 = "ABCD";
+    cout << "Number of anagrams of '" << pattern4 << "' in '" << text4 << "': " << countAnagrams(text4, pattern4) << endl; //expected 3
 
-    std::vector<int> arr5 = {1, 2, 3, 4, 1, 2, 3, 1, 1, 4};
-    int k5 = 8;
-    std::cout << "5. Longest Subarray with Sum at Most " << k5 << ": " << longestSubarrayWithSumAtMostK(arr5, k5) << std::endl; // Expected: 4
+    // 5. Sliding Window Maximum
+    vector<int> nums5 = {1, 3, -1, -3, 5, 3, 6, 7};
+    int k5 = 3;
+    vector<int> result5 = slidingWindowMaximum(nums5, k5);
+    cout << "Sliding window maximum (k=" << k5 << "): ";
+    for (int num : result5) {
+        cout << num << " "; // Expected: 3 3 5 5 6 7
+    }
+    cout << endl;
 
     return 0;
 }
