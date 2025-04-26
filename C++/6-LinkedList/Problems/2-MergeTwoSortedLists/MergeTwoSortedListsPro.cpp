@@ -1,132 +1,138 @@
 #include <iostream>
 #include <vector>
-#include <algorithm>
 #include <list>
+#include <algorithm>
 #include <memory> // For smart pointers
 
 // Definition for singly-linked list.  Using a struct for simplicity and compatibility.
 struct ListNode {
     int val;
     ListNode *next;
-    ListNode() : val(0), next(nullptr) {}
+    // Constructor for convenience
     ListNode(int x) : val(x), next(nullptr) {}
-    ListNode(int x, ListNode *next) : val(x), next(next) {}
 };
 
-// Function to print the linked list (for testing)
-void printList(ListNode* head) {
+// Function to create a linked list from a vector (useful for testing)
+ListNode* createLinkedList(const std::vector<int>& nums) {
+    ListNode* head = nullptr;
+    ListNode* tail = nullptr;
+    for (int num : nums) {
+        ListNode* newNode = new ListNode(num);
+        if (!head) {
+            head = newNode;
+            tail = newNode;
+        } else {
+            tail->next = newNode;
+            tail = newNode;
+        }
+    }
+    return head;
+}
+
+// Function to print a linked list (useful for testing)
+void printLinkedList(ListNode* head) {
     ListNode* current = head;
-    while (current != nullptr) {
+    while (current) {
         std::cout << current->val << " -> ";
         current = current->next;
     }
     std::cout << "nullptr" << std::endl;
 }
 
-// Function to create a linked list from a vector (for testing)
-ListNode* createList(const std::vector<int>& vec) {
-    ListNode* head = nullptr;
-    ListNode* tail = nullptr;
-    for (int val : vec) {
-        ListNode* newNode = new ListNode(val);
-        if (head == nullptr) {
-            head = newNode;
-            tail = newNode;
-        } else {
-            tail->next = newNode;
-            tail = newNode;
-        }
-    }
-    return head;
-}
-
-// Function to delete a linked list (to prevent memory leaks)
-void deleteList(ListNode* head) {
+// Function to free a linked list (to prevent memory leaks)
+void freeLinkedList(ListNode* head) {
     ListNode* current = head;
-    ListNode* next;
-    while (current != nullptr) {
-        next = current->next;
+    while (current) {
+        ListNode* next = current->next;
         delete current;
         current = next;
     }
 }
 
-// Approach 1: Iterative Merge (Most Common, Efficient)
-// Time Complexity: O(m + n), Space Complexity: O(1) - Iterative, constant extra space
-ListNode* mergeTwoListsIterative(ListNode* list1, ListNode* list2) {
-    // Create a dummy node to simplify the logic.  This avoids needing to check
-    // for empty lists as special cases within the main loop.
+// 1. Iterative Approach (Most Common, Efficient)
+//   - Time Complexity: O(m+n), where m and n are the lengths of the lists.
+//   - Space Complexity: O(1) - constant extra space.
+//   - Real-world use case:  Merging sorted result sets from two database queries.  Very efficient and commonly used.
+ListNode* mergeTwoListsIterative(ListNode* l1, ListNode* l2) {
+    // Create a dummy node to simplify the logic.  This avoids special cases
+    // for handling the head of the merged list.
     ListNode dummy(0);
-    ListNode* tail = &dummy; // Use a pointer to the tail of the merged list
+    ListNode* tail = &dummy; // Use a pointer to the tail of the merged list.
 
-    while (list1 != nullptr && list2 != nullptr) {
-        if (list1->val <= list2->val) {
-            tail->next = list1; // Connect the next node of result
-            list1 = list1->next;
+    // Iterate while both lists have elements.
+    while (l1 && l2) {
+        if (l1->val <= l2->val) {
+            tail->next = l1; // Add the smaller element from l1 to the merged list.
+            l1 = l1->next;      // Move to the next node in l1.
         } else {
-            tail->next = list2;
-            list2 = list2->next;
+            tail->next = l2; // Add the smaller element from l2 to the merged list.
+            l2 = l2->next;      // Move to the next node in l2.
         }
-        tail = tail->next; // Move the tail pointer forward
+        tail = tail->next; // Move the tail pointer to the newly added node.
     }
 
-    // Append the remaining nodes from either list (if any).  Only one of
-    // these two 'while' loops will actually execute.
-    if (list1 != nullptr) {
-        tail->next = list1;
+    // Append the remaining elements of either list (if any).  Only one of
+    // these two 'while' loops will execute.
+    if (l1) {
+        tail->next = l1;
     } else {
-        tail->next = list2;
+        tail->next = l2;
     }
 
-    return dummy.next; // Return the head of the merged list (skipping the dummy)
+    return dummy.next; // Return the head of the merged list (excluding the dummy node).
 }
 
-// Approach 2: Recursive Merge
-// Time Complexity: O(m + n), Space Complexity: O(m + n) - Recursive call stack
-ListNode* mergeTwoListsRecursive(ListNode* list1, ListNode* list2) {
-    // Base cases: If either list is empty, return the other list.
-    if (list1 == nullptr) {
-        return list2;
-    }
-    if (list2 == nullptr) {
-        return list1;
-    }
+// 2. Recursive Approach
+//   - Time Complexity: O(m+n)
+//   - Space Complexity: O(m+n) - due to the recursive call stack.
+//   - Real-world use case:  Could be used in a divide-and-conquer algorithm, though
+//     the iterative approach is usually preferred for its better space efficiency.
+ListNode* mergeTwoListsRecursive(ListNode* l1, ListNode* l2) {
+    // Base cases: if either list is empty, return the other list.
+    if (!l1) return l2;
+    if (!l2) return l1;
 
-    // Recursive step: Compare the heads of the lists and merge accordingly.
-    if (list1->val <= list2->val) {
-        list1->next = mergeTwoListsRecursive(list1->next, list2);
-        return list1;
+    if (l1->val <= l2->val) {
+        // Recursively merge the rest of l1 with l2.
+        l1->next = mergeTwoListsRecursive(l1->next, l2);
+        return l1; // Return the current node (l1) as it's the smaller.
     } else {
-        list2->next = mergeTwoListsRecursive(list1, list2->next);
-        return list2;
+        // Recursively merge l1 with the rest of l2.
+        l2->next = mergeTwoListsRecursive(l1, l2->next);
+        return l2; // Return the current node (l2) as it's the smaller.
     }
 }
 
-// Approach 3: Using a Vector (Not in-place, Simple)
-// Time Complexity: O(m + n + k log k), Space Complexity: O(m + n) + O(k), where k is (m+n)
-ListNode* mergeTwoListsVector(ListNode* list1, ListNode* list2) {
-    std::vector<int> mergedValues;
-    // 1. Copy all values from both lists into a vector.
-    while (list1 != nullptr) {
-        mergedValues.push_back(list1->val);
-        list1 = list1->next;
+// 3. Using a Vector and std::merge (STL Approach)
+//   - Time Complexity: O(m+n)
+//   - Space Complexity: O(m+n) - for the vector.
+//   - Real-world use case:  Good for one-off merging tasks or when you need the
+//     merged result in a contiguous memory block (e.g., for further processing
+//     with other STL algorithms).  Not ideal if you *must* maintain a linked list.
+ListNode* mergeTwoListsVector(ListNode* l1, ListNode* l2) {
+    std::vector<int> mergedVector;
+    // Iterate through the linked lists, adding elements to the vector.
+    while (l1) {
+        mergedVector.push_back(l1->val);
+        l1 = l1->next;
     }
-    while (list2 != nullptr) {
-        mergedValues.push_back(list2->val);
-        list2 = list2->next;
+    while (l2) {
+        mergedVector.push_back(l2->val);
+        l2 = l2->next;
     }
+    // Sort the vector.  std::sort is generally very efficient (often introsort).
+    std::sort(mergedVector.begin(), mergedVector.end());
 
-    // 2. Sort the vector.  std::sort is generally implemented as an IntroSort
-    //    (a hybrid of quicksort, heapsort, and insertion sort), giving O(n log n)
-    //    on average and in the worst case.
-    std::sort(mergedValues.begin(), mergedValues.end());
+    // Alternatively, use std::merge:
+    // std::vector<int> mergedVector(length of l1 + length of l2); //Pre-allocate, if size known
+    // std::merge(v1.begin(), v1.end(), v2.begin(), v2.end(), mergedVector.begin());
 
-    // 3. Create a new linked list from the sorted vector.
+    // Create a new linked list from the sorted vector.
     ListNode* head = nullptr;
     ListNode* tail = nullptr;
-    for (int val : mergedValues) {
+    for (int val : mergedVector) {
         ListNode* newNode = new ListNode(val);
-        if (head == nullptr) {
+        if (!head) {
             head = newNode;
             tail = newNode;
         } else {
@@ -137,24 +143,35 @@ ListNode* mergeTwoListsVector(ListNode* list1, ListNode* list2) {
     return head;
 }
 
-// Approach 4: Using std::list (for practice with STL containers)
-// Time Complexity: O(m + n), Space Complexity: O(m + n)
-ListNode* mergeTwoListsSTLList(ListNode* list1, ListNode* list2) {
-    std::list<int> mergedList;
+// 4. Using std::list and std::merge (STL List Approach)
+//   - Time Complexity: O(m+n)
+//   - Space Complexity: O(m+n) - for the lists.
+//   - Real-world use case:  If you're already working with `std::list` in your project
+//     (which is a doubly-linked list), this approach can be convenient.  `std::list`
+//     has its own `merge` method.
+ListNode* mergeTwoListsSTLList(ListNode* l1, ListNode* l2) {
+    std::list<int> list1, list2, mergedList;
 
-    // Copy elements from the linked lists to the std::list.
-    while (list1) {
-        mergedList.push_back(list1->val);
-        list1 = list1->next;
+    // Copy the values from the input linked lists to std::list objects.
+    while (l1) {
+        list1.push_back(l1->val);
+        l1 = l1->next;
     }
-    while (list2) {
-        mergedList.push_back(list2->val);
-        list2 = list2->next;
+    while (l2) {
+        list2.push_back(l2->val);
+        l2 = l2->next;
     }
-    // Sort the merged list
-    mergedList.sort();
+    //list1.sort(); //Ensure lists are sorted.  The input *should* be sorted, but good practice.
+    //list2.sort();
 
-    // Create the result linked list.
+     // Merge the two sorted lists using the std::list::merge() method.  This
+     // method is specifically designed for merging sorted lists, and it
+     // maintains the sorted order.  It's an in-place merge, meaning elements
+     // are moved from list2 into list1.  After the merge, list2 will be empty.
+    list1.merge(list2); // Merges list2 into list1, list2 becomes empty.
+    mergedList = list1;
+
+    // Create a new linked list from the merged std::list.
     ListNode* head = nullptr;
     ListNode* tail = nullptr;
     for (int val : mergedList) {
@@ -162,8 +179,7 @@ ListNode* mergeTwoListsSTLList(ListNode* list1, ListNode* list2) {
         if (!head) {
             head = newNode;
             tail = newNode;
-        }
-        else {
+        } else {
             tail->next = newNode;
             tail = newNode;
         }
@@ -171,85 +187,112 @@ ListNode* mergeTwoListsSTLList(ListNode* list1, ListNode* list2) {
     return head;
 }
 
-// Approach 5: In-place Merge with std::list (Simulating In-Place)
-// Time Complexity: O(m+n), Space Complexity: O(max(m,n))  - Uses list, but tries to minimize extra allocation.
-ListNode* mergeTwoListsInPlaceSTLList(ListNode* list1, ListNode* list2) {
-    std::list<int> mergedList;
+// 5. In-Place Merge (with modification of input lists, for specific scenarios)
+//   - Time Complexity: O(m+n)
+//   - Space Complexity: O(1) -  *if* you are allowed to modify the input lists.
+//   - Real-world use case:  This is a more advanced technique.  It's useful in
+//     memory-constrained environments where you cannot afford the extra space
+//     for a new list.  **Important:** This modifies the original linked lists.
+//     Use with caution!  This approach is similar to the iterative, but modifies the lists.
+ListNode* mergeTwoListsInPlace(ListNode* l1, ListNode* l2) {
+     if (!l1) return l2;
+     if (!l2) return l1;
 
-    // Copy the elements from both lists into a std::list
-     while (list1) {
-        mergedList.push_back(list1->val);
-        list1 = list1->next;
-    }
-    while (list2) {
-        mergedList.push_back(list2->val);
-        list2 = list2->next;
-    }
-    mergedList.sort();
-
-    // Create new linked list.
     ListNode* head = nullptr;
     ListNode* tail = nullptr;
-     for (int val : mergedList) {
-        ListNode* newNode = new ListNode(val);
-        if (!head) {
-            head = newNode;
-            tail = newNode;
-        }
-        else {
-            tail->next = newNode;
-            tail = newNode;
+
+    // Determine the head of the merged list.
+    if (l1->val <= l2->val) {
+        head = l1;
+        tail = l1;
+        l1 = l1->next;
+    } else {
+        head = l2;
+        tail = l2;
+        l2 = l2->next;
+    }
+
+    // Merge the remaining nodes.
+    while (l1 && l2) {
+        if (l1->val <= l2->val) {
+            tail->next = l1;
+            l1 = l1->next;
+            tail = tail->next;
+        } else {
+            tail->next = l2;
+            l2 = l2->next;
+            tail = tail->next;
         }
     }
+
+    // Append the remaining nodes.
+    if (l1) {
+        tail->next = l1;
+    } else {
+        tail->next = l2;
+    }
+
     return head;
 }
 
 int main() {
     // Example usage:
-    std::vector<int> vec1 = {1, 2, 4};
-    std::vector<int> vec2 = {1, 3, 4};
+    std::vector<int> nums1 = {1, 2, 4, 7, 9};
+    std::vector<int> nums2 = {1, 3, 4, 6, 8, 10};
 
-    ListNode* list1 = createList(vec1);
-    ListNode* list2 = createList(vec2);
+    ListNode* list1 = createLinkedList(nums1);
+    ListNode* list2 = createLinkedList(nums2);
 
     std::cout << "List 1: ";
-    printList(list1);
+    printLinkedList(list1);
     std::cout << "List 2: ";
-    printList(list2);
+    printLinkedList(list2);
+    std::cout << std::endl;
 
-    // Approach 1: Iterative Merge
+    // 1. Iterative Merge
     ListNode* mergedListIterative = mergeTwoListsIterative(list1, list2);
     std::cout << "Merged (Iterative): ";
-    printList(mergedListIterative);
-    deleteList(mergedListIterative); // Clean up the list
+    printLinkedList(mergedListIterative);
+    freeLinkedList(mergedListIterative); // Clean up the allocated memory.
+    list1 = createLinkedList(nums1);  //Recreate lists
+    list2 = createLinkedList(nums2);
 
-    // Approach 2: Recursive Merge
+    // 2. Recursive Merge
     ListNode* mergedListRecursive = mergeTwoListsRecursive(list1, list2);
     std::cout << "Merged (Recursive): ";
-    printList(mergedListRecursive);
-    deleteList(mergedListRecursive);
+    printLinkedList(mergedListRecursive);
+    freeLinkedList(mergedListRecursive);
+    list1 = createLinkedList(nums1);
+    list2 = createLinkedList(nums2);
 
-    // Approach 3: Using a Vector
+    // 3. Vector Merge
     ListNode* mergedListVector = mergeTwoListsVector(list1, list2);
     std::cout << "Merged (Vector): ";
-    printList(mergedListVector);
-    deleteList(mergedListVector);
+    printLinkedList(mergedListVector);
+    freeLinkedList(mergedListVector);
+     list1 = createLinkedList(nums1);
+    list2 = createLinkedList(nums2);
 
-    // Approach 4: Using std::list
+    // 4. STL List Merge
     ListNode* mergedListSTLList = mergeTwoListsSTLList(list1, list2);
     std::cout << "Merged (STL List): ";
-    printList(mergedListSTLList);
-    deleteList(mergedListSTLList);
+    printLinkedList(mergedListSTLList);
+    freeLinkedList(mergedListSTLList);
+    list1 = createLinkedList(nums1);
+    list2 = createLinkedList(nums2);
 
-     // Approach 5: In-place Merge with std::list
-    ListNode* mergedListInPlaceSTLList = mergeTwoListsInPlaceSTLList(list1, list2);
-    std::cout << "Merged (In-place STL List): ";
-    printList(mergedListInPlaceSTLList);
-    deleteList(mergedListInPlaceSTLList);
-
-    // Clean up the original lists (important!)
-    deleteList(list1);
-    deleteList(list2);
+    // 5. In-Place Merge
+    ListNode* mergedListInPlace = mergeTwoListsInPlace(list1, list2);
+    std::cout << "Merged (In-Place): ";
+    printLinkedList(mergedListInPlace);
+    //The original lists are modified in-place merge.
+    std::cout << "List 1 (Modified): ";
+    printLinkedList(list1);
+    std::cout << "List 2 (Modified): ";
+    printLinkedList(list2);
+    freeLinkedList(list1);  // Free, although they were modified.
+    //freeLinkedList(list2); // Don't double free.  l2 is now empty after merge.
+    //list1 = createLinkedList(nums1); // No need to recreate.
 
     return 0;
 }
