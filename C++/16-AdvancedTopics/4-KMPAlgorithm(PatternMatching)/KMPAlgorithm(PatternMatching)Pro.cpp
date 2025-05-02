@@ -1,5 +1,5 @@
 // KMP Algorithm and Its Real-World Project Implementations (5 Approaches)
-// Author: [Your Name]
+// Author: Bill Graham Peacemaker
 // Description: This file contains C++ implementations of the Knuth-Morris-Pratt (KMP) pattern matching algorithm
 // across five different real-world scenarios with detailed code comments.
 
