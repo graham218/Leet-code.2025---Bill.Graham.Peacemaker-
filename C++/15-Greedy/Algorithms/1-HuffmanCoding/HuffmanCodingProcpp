@@ -1,0 +1,154 @@
+/*
+Huffman Coding in C++
+This file includes 5 different real-world inspired approaches to implement Huffman Coding using a greedy algorithm.
+Each approach is suitable for different application scenarios such as:
+1. File compression utility
+2. Image compression engine
+3. Network transmission optimization
+4. Embedded systems with memory constraints
+5. Multi-threaded server-based compression system
+*/
+
+#include <iostream>
+#include <queue>
+#include <unordered_map>
+#include <vector>
+#include <string>
+#include <thread>
+#include <mutex>
+using namespace std;
+
+// Node structure for Huffman Tree
+struct HuffmanNode {
+    char ch;
+    int freq;
+    HuffmanNode *left, *right;
+
+    HuffmanNode(char ch, int freq) : ch(ch), freq(freq), left(nullptr), right(nullptr) {}
+};
+
+// Comparison object for min-heap
+struct Compare {
+    bool operator()(HuffmanNode* l, HuffmanNode* r) {
+        return l->freq > r->freq;
+    }
+};
+
+// Helper function to build Huffman Tree
+HuffmanNode* buildHuffmanTree(const unordered_map<char, int>& freqMap) {
+    priority_queue<HuffmanNode*, vector<HuffmanNode*>, Compare> minHeap;
+
+    for (auto pair : freqMap) {
+        minHeap.push(new HuffmanNode(pair.first, pair.second));
+    }
+
+    while (minHeap.size() > 1) {
+        HuffmanNode* left = minHeap.top(); minHeap.pop();
+        HuffmanNode* right = minHeap.top(); minHeap.pop();
+
+        HuffmanNode* merged = new HuffmanNode('\0', left->freq + right->freq);
+        merged->left = left;
+        merged->right = right;
+        minHeap.push(merged);
+    }
+
+    return minHeap.top();
+}
+
+// Generate Huffman codes recursively
+void generateCodes(HuffmanNode* root, string code, unordered_map<char, string>& huffmanCodes) {
+    if (!root) return;
+    if (root->ch != '\0') huffmanCodes[root->ch] = code;
+    generateCodes(root->left, code + "0", huffmanCodes);
+    generateCodes(root->right, code + "1", huffmanCodes);
+}
+
+// Utility: Get frequency of characters in the input text
+unordered_map<char, int> getFrequencyMap(const string& text) {
+    unordered_map<char, int> freqMap;
+    for (char ch : text) freqMap[ch]++;
+    return freqMap;
+}
+
+// --- Approach 1: File Compression Utility ---
+void compressFile(const string& content) {
+    auto freqMap = getFrequencyMap(content);
+    HuffmanNode* root = buildHuffmanTree(freqMap);
+    unordered_map<char, string> huffmanCodes;
+    generateCodes(root, "", huffmanCodes);
+
+    string compressed;
+    for (char ch : content) compressed += huffmanCodes[ch];
+
+    cout << "[File Compression] Compressed bit string: " << compressed << endl;
+}
+
+// --- Approach 2: Image Compression Engine (grayscale pixel string input) ---
+void compressImage(const string& pixelData) {
+    auto freqMap = getFrequencyMap(pixelData);
+    HuffmanNode* root = buildHuffmanTree(freqMap);
+    unordered_map<char, string> huffmanCodes;
+    generateCodes(root, "", huffmanCodes);
+
+    string compressed;
+    for (char pixel : pixelData) compressed += huffmanCodes[pixel];
+
+    cout << "[Image Compression] Compressed pixel string: " << compressed << endl;
+}
+
+// --- Approach 3: Network Transmission Optimization ---
+void networkCompressAndSend(const string& message) {
+    auto freqMap = getFrequencyMap(message);
+    HuffmanNode* root = buildHuffmanTree(freqMap);
+    unordered_map<char, string> huffmanCodes;
+    generateCodes(root, "", huffmanCodes);
+
+    string compressed;
+    for (char ch : message) compressed += huffmanCodes[ch];
+
+    cout << "[Network] Data ready for transmission: " << compressed << endl;
+}
+
+// --- Approach 4: Embedded Systems Memory-efficient Compression ---
+void compressForEmbeddedSystem(const string& input) {
+    auto freqMap = getFrequencyMap(input);
+    HuffmanNode* root = buildHuffmanTree(freqMap);
+    unordered_map<char, string> huffmanCodes;
+    generateCodes(root, "", huffmanCodes);
+
+    string compressed;
+    for (char ch : input) compressed += huffmanCodes[ch];
+
+    cout << "[Embedded System] Compressed data: " << compressed << endl;
+}
+
+// --- Approach 5: Multi-threaded Server-side Compression ---
+mutex printMutex;
+void threadedCompress(string input, const string& label) {
+    auto freqMap = getFrequencyMap(input);
+    HuffmanNode* root = buildHuffmanTree(freqMap);
+    unordered_map<char, string> huffmanCodes;
+    generateCodes(root, "", huffmanCodes);
+
+    string compressed;
+    for (char ch : input) compressed += huffmanCodes[ch];
+
+    lock_guard<mutex> lock(printMutex);
+    cout << "[Server - " << label << "] Compressed: " << compressed << endl;
+}
+
+int main() {
+    string sampleText = "huffman coding example";
+    compressFile(sampleText);
+    compressImage("0011223344556677");
+    networkCompressAndSend("sensor_data_stream_2025");
+    compressForEmbeddedSystem("low_power_device_data");
+
+    // Launch threads for parallel compression
+    thread t1(threadedCompress, "threaded data 1", "Thread 1");
+    thread t2(threadedCompress, "threaded data 2", "Thread 2");
+    t1.join();
+    t2.join();
+
+    return 0;
+}
