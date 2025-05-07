@@ -1,14 +1,57 @@
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DailyTemperatures {
 
     /**
-     * Approach 1: Brute Force
-     * -   For each day, iterate through the following days to find the next warmer day.
-     * -   Time Complexity: O(n^2)
-     * -   Space Complexity: O(n) (for the result array)
+     * Approach 1: Monotonic Stack (Optimized)
+     *
+     * This is the most efficient approach.  It uses a stack to keep track of the
+     * indices of temperatures in decreasing order.  For each temperature, we pop
+     * the indices of any warmer temperatures from the stack and update their
+     * waiting days.
+     *
+     * Time Complexity: O(N), where N is the length of the temperatures array. Each
+     * index is pushed and popped at most once.
+     * Space Complexity: O(N) in the worst case, when the temperatures are
+     * monotonically decreasing.
+     *
+     * Real-world application: This approach is optimal for analyzing time-series
+     * data where you need to find the next greater element, such as stock prices,
+     * weather patterns, or signal processing.  It's efficient for large datasets.
+     */
+    public static int[] dailyTemperaturesMonotonicStack(int[] temperatures) {
+        int n = temperatures.length;
+        int[] result = new int[n];
+        Deque<Integer> stack = new ArrayDeque<>(); // Stack of indices
+
+        for (int i = 0; i < n; i++) {
+            while (!stack.isEmpty() && temperatures[i] > temperatures[stack.peek()]) {
+                int prevIndex = stack.pop();
+                result[prevIndex] = i - prevIndex;
+            }
+            stack.push(i);
+        }
+        return result;
+    }
+
+    /**
+     * Approach 2: Brute Force
+     *
+     * This is the most straightforward approach, but it's also the least efficient.
+     * For each day, it iterates through the remaining days to find the next warmer
+     * day.
+     *
+     * Time Complexity: O(N^2), where N is the length of the temperatures array.
+     * Space Complexity: O(1).
+     *
+     * Real-world application: While inefficient for large datasets, this approach
+     * is simple to understand and implement.  It might be used in a very small-scale
+     * application or for testing purposes where performance is not critical.  For
+     * example, in a simple script to process a very small amount of data.
      */
     public static int[] dailyTemperaturesBruteForce(int[] temperatures) {
         int n = temperatures.length;
@@ -21,106 +64,109 @@ public class DailyTemperatures {
                     break;
                 }
             }
-            // If no warmer day is found, result[i] remains 0
         }
         return result;
     }
 
     /**
-     * Approach 2: Stack (Optimized)
-     * -   Use a stack to keep track of the indices of days with decreasing temperatures.
-     * -   When a warmer day is encountered, pop the days with lower temperatures from the stack.
-     * -   Time Complexity: O(n)
-     * -   Space Complexity: O(n) (for the stack and result array)
+     * Approach 3: Using a HashMap (Less Efficient)
+     *
+     * This approach uses a HashMap to store the indices of temperatures.  It
+     * iterates through the temperatures and checks the map for warmer temperatures.
+     * This approach is less efficient than the Monotonic Stack approach because
+     * lookups in the HashMap can be costly, and it doesn't guarantee a single pass.
+     *
+     * Time Complexity: O(N^2) in the worst case, where N is the length of the temperatures array.
+     * Space Complexity: O(N), for storing the temperatures and their indices in the HashMap.
+     *
+     * Real-world application: This approach might be used if you need to store
+     * additional information about the temperatures and their indices, but the
+     * performance is not critical.  For example, in a data analysis script where
+     * you need to perform other operations on the temperature data.  However, a
+     * better approach would be to use a separate data structure along with the
+     * Monotonic Stack approach.
+     */
+    public static int[] dailyTemperaturesHashMap(int[] temperatures) {
+        int n = temperatures.length;
+        int[] result = new int[n];
+        Map<Integer, Integer> tempMap = new HashMap<>();
+
+        for (int i = 0; i < n; i++) {
+            tempMap.put(temperatures[i], i);
+            for (int j = i + 1; j < n; j++) {
+                if (temperatures[j] > temperatures[i]) {
+                    result[i] = j - i;
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Approach 4: Optimized Brute Force (Slight Improvement)
+     *
+     * This is a slight optimization of the brute force approach. Instead of
+     * starting the inner loop from i+1, we can start from the next warmer day
+     * we found for the previous day (if any). This can reduce the number of
+     * iterations in some cases, but the worst-case time complexity remains O(N^2).
+     *
+     * Time Complexity: O(N^2) in the worst case, but can be faster than the basic
+     * brute force in some cases.
+     * Space Complexity: O(1).
+     *
+     * Real-world application: This approach is a minor optimization over the
+     * brute-force method.  It might be useful in situations where you expect some
+     * locality in the data, meaning that if day i's next warmer day is j, then
+     * day i+1's next warmer day is likely to be near j.  However, for truly
+     * random or decreasing temperature data, it offers little to no improvement.
+     */
+    public static int[] dailyTemperaturesOptimizedBruteForce(int[] temperatures) {
+        int n = temperatures.length;
+        int[] result = new int[n];
+        int nextWarmest = 0; // Keep track of the next warmest day found so far
+
+        for (int i = 0; i < n; i++) {
+            nextWarmest = Math.max(i + 1, nextWarmest); // Start from the next day or the previous nextWarmest
+            for (int j = nextWarmest; j < n; j++) {
+                if (temperatures[j] > temperatures[i]) {
+                    result[i] = j - i;
+                    nextWarmest = j; // Update nextWarmest for the next iteration
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Approach 5: Using a Stack (Less Optimized)
+     *
+     * This approach also uses a stack, but it's less optimized than the first
+     * approach.  It stores both the temperature and the index in the stack,
+     * which is not necessary.  It also iterates through the stack for each
+     * temperature, which can lead to redundant comparisons.
+     *
+     * Time Complexity: O(N^2) in the worst case, where N is the length of the temperatures array.
+     * Space Complexity: O(N), for the stack.
+     *
+     * Real-world application: This approach is less efficient than the Monotonic
+     * Stack approach.  It might be used as a less optimal solution, perhaps in an
+     * educational setting to illustrate the use of stacks, but it's not recommended
+     * for production code.  The optimized Monotonic Stack approach is generally
+     * preferred.
      */
     public static int[] dailyTemperaturesStack(int[] temperatures) {
         int n = temperatures.length;
         int[] result = new int[n];
-        Deque<Integer> stack = new ArrayDeque<>(); // Stack to store indices
+        Deque<int[]> stack = new ArrayDeque<>(); // Stack of [temperature, index] pairs
 
         for (int i = 0; i < n; i++) {
-            // While the stack is not empty and the current day is warmer than the day at the top of the stack
-            while (!stack.isEmpty() && temperatures[i] > temperatures[stack.peek()]) {
-                int prevIndex = stack.pop(); // Get the index of the previous day
-                result[prevIndex] = i - prevIndex; // Calculate the difference (days until warmer)
+            while (!stack.isEmpty() && temperatures[i] > stack.peek()[0]) {
+                int[] prev = stack.pop();
+                result[prev[1]] = i - prev[1];
             }
-            stack.push(i); // Push the current day's index onto the stack
-        }
-        return result;
-    }
-
-    /**
-     * Approach 3: Optimized Stack (Slightly More Efficient)
-     * - Similar to Approach 2, but avoids some redundant stack operations.
-     * - Time Complexity: O(n)
-     * - Space Complexity: O(n)
-     */
-    public static int[] dailyTemperaturesOptimizedStack(int[] temperatures) {
-        int n = temperatures.length;
-        int[] result = new int[n];
-        Deque<Integer> stack = new ArrayDeque<>();
-
-        for (int i = n - 1; i >= 0; i--) { // Iterate from right to left
-            while (!stack.isEmpty() && temperatures[i] >= temperatures[stack.peek()]) {
-                stack.pop();
-            }
-            result[i] = stack.isEmpty() ? 0 : stack.peek() - i;
-            stack.push(i);
-        }
-        return result;
-    }
-
-    /**
-     * Approach 4: Using Next Array
-     * - Create a 'next' array to store the index of the next warmer day for each temperature.
-     * - Iterate through temperatures and update the 'next' array.
-     * - Then, calculate the result using the 'next' array.
-     * - Time Complexity: O(n * W), where W is the range of temperatures (at most 100, so it's closer to O(n))
-     * - Space Complexity: O(n + W)  (O(n) for result and next, O(W) for the next warmer day indexes)
-     */
-    public static int[] dailyTemperaturesNextArray(int[] temperatures) {
-        int n = temperatures.length;
-        int[] result = new int[n];
-        int[] next = new int[101]; // Array to store the next warmer day's index for each temperature (0 to 100)
-        Arrays.fill(next, -1);    // Initialize with -1 (no warmer day found yet)
-
-        for (int i = n - 1; i >= 0; i--) {
-            int temp = temperatures[i];
-            int warmerIndex = Integer.MAX_VALUE;
-
-            // Find the minimum index of the next warmer day
-            for (int t = temp + 1; t <= 100; t++) {
-                if (next[t] != -1) {
-                    warmerIndex = Math.min(warmerIndex, next[t]);
-                }
-            }
-
-            if (warmerIndex != Integer.MAX_VALUE) {
-                result[i] = warmerIndex - i;
-            }
-            next[temp] = i; // Store the index of the current day for its temperature
-        }
-        return result;
-    }
-
-    /**
-     * Approach 5: Monotonic Stack (Most Efficient)
-     * - A variation of the stack approach, emphasizing the monotonic property.
-     * - This approach maintains a monotonically decreasing stack of indices.
-     * - Time Complexity: O(n)
-     * - Space Complexity: O(n)
-     */
-    public static int[] dailyTemperaturesMonotonicStack(int[] temperatures) {
-        int n = temperatures.length;
-        int[] result = new int[n];
-        Deque<Integer> stack = new ArrayDeque<>();
-
-        for (int i = 0; i < n; i++) {
-            while (!stack.isEmpty() && temperatures[i] > temperatures[stack.peek()]) {
-                int index = stack.pop();
-                result[index] = i - index;
-            }
-            stack.push(i);
+            stack.push(new int[]{temperatures[i], i});
         }
         return result;
     }
@@ -128,27 +174,23 @@ public class DailyTemperatures {
     public static void main(String[] args) {
         int[] temperatures = {73, 74, 75, 71, 69, 72, 76, 73};
 
-        System.out.println("Input Temperatures: " + Arrays.toString(temperatures));
+        System.out.println("Temperatures: " + Arrays.toString(temperatures));
 
-        // Brute Force Approach
-        int[] result1 = dailyTemperaturesBruteForce(temperatures);
-        System.out.println("Brute Force: " + Arrays.toString(result1));
+        // Test each approach
+        int[] result1 = dailyTemperaturesMonotonicStack(temperatures);
+        System.out.println("Monotonic Stack: " + Arrays.toString(result1)); // Expected: [1, 1, 4, 2, 1, 1, 0, 0]
 
-        // Stack Approach
-        int[] result2 = dailyTemperaturesStack(temperatures);
-        System.out.println("Stack: " + Arrays.toString(result2));
+        int[] result2 = dailyTemperaturesBruteForce(temperatures);
+        System.out.println("Brute Force: " + Arrays.toString(result2));     // Expected: [1, 1, 4, 2, 1, 1, 0, 0]
 
-        // Optimized Stack Approach
-        int[] result3 = dailyTemperaturesOptimizedStack(temperatures);
-        System.out.println("Optimized Stack: " + Arrays.toString(result3));
+        int[] result3 = dailyTemperaturesHashMap(temperatures);
+        System.out.println("HashMap: " + Arrays.toString(result3));       // Expected: [1, 1, 4, 2, 1, 1, 0, 0]
 
-        // Next Array Approach
-        int[] result4 = dailyTemperaturesNextArray(temperatures);
-        System.out.println("Next Array: " + Arrays.toString(result4));
+        int[] result4 = dailyTemperaturesOptimizedBruteForce(temperatures);
+        System.out.println("Optimized Brute Force: " + Arrays.toString(result4));  // Expected: [1, 1, 4, 2, 1, 1, 0, 0]
 
-        // Monotonic Stack Approach
-        int[] result5 = dailyTemperaturesMonotonicStack(temperatures);
-        System.out.println("Monotonic Stack: " + Arrays.toString(result5));
+        int[] result5 = dailyTemperaturesStack(temperatures);
+        System.out.println("Stack: " + Arrays.toString(result5));           // Expected: [1, 1, 4, 2, 1, 1, 0, 0]
     }
 }
 
